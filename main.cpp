@@ -3,17 +3,13 @@
 #include <vector>
 #include <algorithm>
 
-#define PAYLOAD_LENGTH 4*17
-
-
 using namespace std;
 
 bool valid = 0, ready = 0, clk = 0;
 int freq;
 
 uint8_t output_ports;
-uint8_t errors;
-uint8_t payload[PAYLOAD_LENGTH];
+uint8_t errors;     // Error vector
 
 struct message{
     uint16_t packet_length, checksum, dummy, src_address, dest_address;
@@ -25,38 +21,22 @@ bool contains(const vector<uint16_t>& vec, uint16_t value) {
     return find(vec.begin(), vec.end(), value) != vec.end();
 }
 
-uint16_t checksum_calculation(uint8_t data[16]){
-    uint16_t intermed[8];
-    uint32_t checksum = 0;
-    uint16_t ret_check;
-
-    for(int i = 0; i < 15;){
-        intermed[i] = (data[i+1] << 8) + data[i];
-        i = i + 2;
-    }
-    
-    for(int i = 0; i < 8; i++){
-        checksum = checksum + intermed[i];
-    }
-
-    if(checksum > 0xffff){
-        checksum = (checksum & 0xffff) + (checksum & 0xff0000 >> 16);
-    }
-
-    checksum = ~checksum;
-    ret_check = (uint16_t) checksum;
-
-    return ret_check;
+int index(const vector<uint16_t>& vec, uint16_t value) {
+    return find(vec.begin(), vec.end(), value) - vec.begin();
 }
+
 /* Class declaration */
 class slave{
     private:
     message data;
-    vector<uint16_t> addr_table;
+    uint16_t checksum_calculation(uint8_t data[16]);
+    void flag_tester(void);
     public:
+    vector<uint16_t> addr_table;
     void execution(uint8_t data_bus[16]); // receives data from data_bus
     void set_ready(bool value);
     void print_data(void);
+    void print_table(void);
 };
 
 void slave::execution(uint8_t data_bus[16]){
@@ -74,27 +54,14 @@ void slave::execution(uint8_t data_bus[16]){
     this->data.checksum = received_buffer[2];
     this->data.checksum = (this->data.checksum << 8) | received_buffer[3];
 
-    /*
-    if(!(this->data.checksum == checksum_calculation(received_buffer))){
-        cout << "VALOR INCOERENTE DE CHECKSUM";
-        errors |= (1<<1);
-    }
-    */
-
     this->data.seq_num = received_buffer[4];
     this->data.seq_num = (this->data.seq_num << 8) | received_buffer[5];
     this->data.seq_num = (this->data.seq_num << 8) | received_buffer[6];
     this->data.seq_num = (this->data.seq_num << 8) | received_buffer[7];
 
-    if(!(this->data.seq_num == prev_seq + 1)){
-        cout << "VALOR INCOERENTE PARA NUMERO DE SEQUENCIA!\n";
-        errors |= (1<<2);
-    }
-
     this->data.flag = received_buffer[8];
 
-    if((this->data.flag & 0x80) & ((this->data.flag & 0x01)))
-        cout << "PROIBIDO!\n";
+    flag_tester();
 
     this->data.protocol = received_buffer[9];
 
@@ -109,9 +76,15 @@ void slave::execution(uint8_t data_bus[16]){
     if((this->data.flag & 0b00000001) & contains(addr_table,this->data.src_address))
         addr_table.erase(find(addr_table.begin(),addr_table.end(),this->data.src_address)); // Exclui esse valor de src_address da tabela
 
+    //if((this->data.flag & 0b10000000) & addr_table.)
 
     this->data.dest_address = received_buffer[14];
     this->data.dest_address = (this->data.dest_address << 8) | received_buffer[15];
+
+    if(!(this->data.checksum == this->checksum_calculation(received_buffer))){
+        cout << "VALOR INCOERENTE DE CHECKSUM\n";
+        errors |= (1<<1);
+    }
 
 }
 
@@ -133,6 +106,31 @@ void slave::print_data(void){
     cout << "destination address: " << this->data.dest_address << '\n';
 }
 
+uint16_t slave::checksum_calculation(uint8_t data[16]){
+    uint16_t checksum = 0;
+
+    for (int i = 0; i < 8; i ++) {
+        if (i == 1)
+            continue;
+        checksum += (data[2*i] << 8) + data[2*i + 1];
+    }
+
+    checksum = ~checksum;
+
+    cout << "checksum function: "<< checksum << "\n";
+    return (uint16_t) checksum;
+}
+
+void slave::flag_tester(void){
+    if((this->data.flag & 0x80) & ((this->data.flag & 0x01)))
+        cout << "PROIBIDO!\n";
+}
+
+void slave::print_table(void){
+    cout << this->addr_table[1] << "\n";
+}
+
+
 int main(void){
     slave slave_device;
     uint8_t data_1[16] = {0x00, 0x04, 0x7f, 0xe1, 0x00, 0x00, 0x00, 0x01, 0x80, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
@@ -140,6 +138,16 @@ int main(void){
     slave_device.set_ready(1);
     slave_device.execution(data_1);
     slave_device.print_data();
+    slave_device.print_table();
+
+    
+
+    /*
+    start()
+    for()
+        new_incoming_byte(uint8, start, end)
+    end()
+    */
 
     return 0;
 }
