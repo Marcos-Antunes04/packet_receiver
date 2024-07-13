@@ -2,37 +2,37 @@
 #include "stdint.h"
 #include <vector>
 #include <algorithm>
+#include <string>
 
 using namespace std;
 
-bool valid = 0, ready = 0, clk = 0;
-int freq;
-
-uint8_t output_ports;
 uint8_t errors;     // Error vector
+int ready = 0;
 
+/* Struct definitions */
 struct message{
     uint16_t packet_length, checksum, dummy, src_address, dest_address;
     uint32_t seq_num;
     uint8_t flag, protocol;
 };
 
-bool contains(const vector<uint16_t>& vec, uint16_t value) {
-    return find(vec.begin(), vec.end(), value) != vec.end();
-}
-
-int index(const vector<uint16_t>& vec, uint16_t value) {
-    return find(vec.begin(), vec.end(), value) - vec.begin();
-}
+struct interface{
+    string name;
+    bool is_free = true; // Interface inicializada como limpa
+    uint16_t address;
+};
 
 /* Class declaration */
 class slave{
     private:
     message data;
+    interface port[5];
     uint16_t checksum_calculation(uint8_t data[16]);
     void flag_tester(void);
+    void sync_close(void);
+
     public:
-    vector<uint16_t> addr_table;
+    slave(void);
     void execution(uint8_t data_bus[16]); // receives data from data_bus
     void set_ready(bool value);
     void print_data(void);
@@ -71,21 +71,15 @@ void slave::execution(uint8_t data_bus[16]){
     this->data.src_address = received_buffer[12];
     this->data.src_address = (this->data.src_address << 8) | received_buffer[13];
 
-    if((this->data.flag & 0b10000000) & !contains(addr_table,this->data.src_address) & (addr_table.size() < 5))
-        addr_table.push_back(this->data.src_address);                                       // Inclui esse valor de src_address na tabela
-    if((this->data.flag & 0b00000001) & contains(addr_table,this->data.src_address))
-        addr_table.erase(find(addr_table.begin(),addr_table.end(),this->data.src_address)); // Exclui esse valor de src_address da tabela
-
-    //if((this->data.flag & 0b10000000) & addr_table.)
-
     this->data.dest_address = received_buffer[14];
     this->data.dest_address = (this->data.dest_address << 8) | received_buffer[15];
 
     if(!(this->data.checksum == this->checksum_calculation(received_buffer))){
-        cout << "VALOR INCOERENTE DE CHECKSUM\n";
+        cout << "Valor incoerente de checksum!" << endl;
         errors |= (1<<1);
     }
 
+    this->sync_close(); // Atualiza a tabela de endereco fisico
 }
 
 void slave::set_ready(bool value){
@@ -107,29 +101,94 @@ void slave::print_data(void){
 }
 
 uint16_t slave::checksum_calculation(uint8_t data[16]){
-    uint16_t checksum = 0;
+    uint32_t checksum = 0;
 
     for (int i = 0; i < 8; i ++) {
         if (i == 1)
             continue;
-        checksum += (data[2*i] << 8) + data[2*i + 1];
+        checksum += (uint16_t) ((data[2*i] << 8) + data[2*i + 1]);
     }
 
-    checksum = ~checksum;
+    if(checksum > 0xffff){ // Tratamento de carry
+        checksum = ((checksum & 0xffff) + ((checksum >> 16) & 0xffff));
+    }
+
+    checksum = (0xffff & ~checksum);
 
     cout << "checksum function: "<< checksum << "\n";
     return (uint16_t) checksum;
 }
 
 void slave::flag_tester(void){
-    if((this->data.flag & 0x80) & ((this->data.flag & 0x01)))
-        cout << "PROIBIDO!\n";
+    if((this->data.flag & 0b10000001) == 0b10000001)
+        cout << "Campo de flag indicando sincronizacao e fechamento -> proibido" << endl;
+}
+
+void slave::sync_close(void){
+    if((this->data.flag & 0b10000001) == 0b10000000){ // Mensagem de sincronização
+        bool error_flag = false;
+        for(int i = 0; i < 5; i++){
+            if(this->port[i].address == this->data.src_address){
+                cout << "Erro de sincronizacao. Endereço já definido na tabela" << endl;
+                error_flag = true;
+                break;
+            }
+        }
+
+        if(error_flag == false){
+            for(int i = 0; i < 5; i++){
+                if(this->port[i].is_free == true){  // Verifica se a porta está livre
+                    this->port[i].address = this->data.src_address;
+                    this->port[i].is_free = false; // Seta a porta como ocupada
+                    cout << "Endereco armazenado em: " << this->port[i].name << endl;
+                    break;
+                }
+
+                if((i == 4) & (this->port[i].is_free == false))
+                    cout << "Todas as portas cheias" << endl;
+            }
+        }
+    }
+
+    if((this->data.flag & 0b10000001) == 0b00000001){ // Mensagem de fechamento 
+        for(int i = 0; i < 5; i++){
+            if(this->port[i].address == this->data.src_address)
+                this->port[i].is_free == true;
+            if((i == 4) & ((this->port[i].address != this->data.src_address)))
+                cout << "Endereco nao esta contido na tabela. Nao ocorrera fechamento de porta" << endl;
+        }
+
+    }
 }
 
 void slave::print_table(void){
-    cout << this->addr_table[1] << "\n";
+    for(int i = 0; i < 5; i++){
+        if(this->port[i].is_free == false)
+            break;
+        if((i == 4) & (this->port->is_free == true)){
+            cout << "Nao ha endereco armazenado na tabela" << endl;
+            return ;
+        }
+    }
+
+    cout << "| Tabela de Enderecos Fisicos |" << endl; 
+
+    for(int i = 0; i < 5; i++){
+        if(this->port[i].is_free == false){
+            cout << "| " << this->port[i].name << " | " << this->port[i].address << " |" << endl;
+        }
+    }
+    
+
 }
 
+slave::slave(void){     // Construtor
+    this->port[0].name = "PORTA 0";
+    this->port[1].name = "PORTA 1";
+    this->port[2].name = "PORTA 2";
+    this->port[3].name = "PORTA 3";
+    this->port[4].name = "PORTA 4";
+}
 
 int main(void){
     slave slave_device;
@@ -137,9 +196,8 @@ int main(void){
 
     slave_device.set_ready(1);
     slave_device.execution(data_1);
-    slave_device.print_data();
-    slave_device.print_table();
 
+    // slave_device.print_table();
     
 
     /*
