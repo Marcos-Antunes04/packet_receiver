@@ -1,7 +1,6 @@
 #include <iostream>
 #include "stdint.h"
 #include <vector>
-#include <algorithm>
 #include <string>
 
 using namespace std;
@@ -20,9 +19,10 @@ struct interface{
     string name;
     bool is_free = true; // Interface inicializada como limpa
     uint16_t address;
+    uint32_t seq_num;
 };
 
-/* Class declaration */
+/* class Slave -- Representa o switch */
 class slave{
     private:
     message data;
@@ -30,7 +30,7 @@ class slave{
     uint16_t checksum_calculation(uint8_t data[16]);
     void flag_tester(void);
     void sync_close(void);
-
+    void seq_num_tester(void);
     public:
     slave(void);
     void execution(uint8_t data_bus[16]); // receives data from data_bus
@@ -39,7 +39,9 @@ class slave{
     void print_table(void);
 };
 
+/* Função responsável por realizar o desempacotamento dos campos do cabeçalho e executar rotinas de tratamento de erro */
 void slave::execution(uint8_t data_bus[16]){
+    cout << "Pacote recebido" << endl;
     uint8_t received_buffer[16];
     uint32_t prev_seq = this->data.seq_num;
     for(int i = 0; i < 16; i++){
@@ -61,7 +63,7 @@ void slave::execution(uint8_t data_bus[16]){
 
     this->data.flag = received_buffer[8];
 
-    flag_tester();
+    this->flag_tester();    // Verifica se sync = 1 e close = 1
 
     this->data.protocol = received_buffer[9];
 
@@ -79,9 +81,11 @@ void slave::execution(uint8_t data_bus[16]){
         errors |= (1<<1);
     }
 
+    this->seq_num_tester(); // Verificador de seq_num
     this->sync_close(); // Atualiza a tabela de endereco fisico
 }
 
+/* Seta o valor de ready de acordo com o parametro de entrada */
 void slave::set_ready(bool value){
     if (value)
         ready = 1;
@@ -89,6 +93,7 @@ void slave::set_ready(bool value){
         ready = 0;
 }
 
+/* Printa individualmente os campos do cabeçalho */
 void slave::print_data(void){
     cout << "packet length: " << this->data.packet_length << '\n';
     cout << "checksum: " << this->data.checksum << '\n';
@@ -100,6 +105,7 @@ void slave::print_data(void){
     cout << "destination address: " << this->data.dest_address << '\n';
 }
 
+/* Realiza o cálculo da checksum baseado no pacote recebido */
 uint16_t slave::checksum_calculation(uint8_t data[16]){
     uint32_t checksum = 0;
 
@@ -115,15 +121,17 @@ uint16_t slave::checksum_calculation(uint8_t data[16]){
 
     checksum = (0xffff & ~checksum);
 
-    cout << "checksum function: "<< checksum << "\n";
+    cout << "checksum function: "<< (uint16_t) checksum << "\n";
     return (uint16_t) checksum;
 }
 
+/* Verifica a existencia de erros no campo flag*/
 void slave::flag_tester(void){
     if((this->data.flag & 0b10000001) == 0b10000001)
         cout << "Campo de flag indicando sincronizacao e fechamento -> proibido" << endl;
 }
 
+/* Trata mensagens de sincronização ou fechamento*/
 void slave::sync_close(void){
     if((this->data.flag & 0b10000001) == 0b10000000){ // Mensagem de sincronização
         bool error_flag = false;
@@ -140,6 +148,7 @@ void slave::sync_close(void){
                 if(this->port[i].is_free == true){  // Verifica se a porta está livre
                     this->port[i].address = this->data.src_address;
                     this->port[i].is_free = false; // Seta a porta como ocupada
+                    this->port[i].seq_num = this->data.seq_num;
                     cout << "Endereco armazenado em: " << this->port[i].name << endl;
                     break;
                 }
@@ -152,15 +161,18 @@ void slave::sync_close(void){
 
     if((this->data.flag & 0b10000001) == 0b00000001){ // Mensagem de fechamento 
         for(int i = 0; i < 5; i++){
-            if(this->port[i].address == this->data.src_address)
+            if(this->port[i].address == this->data.src_address){
                 this->port[i].is_free == true;
+                cout << "Fechamento de conexao: " << this->port[i].name << endl;
+                break;
+            }
             if((i == 4) & ((this->port[i].address != this->data.src_address)))
                 cout << "Endereco nao esta contido na tabela. Nao ocorrera fechamento de porta" << endl;
         }
-
     }
 }
 
+/* Constroi a tabela de roteamento de endereços físicos */
 void slave::print_table(void){
     for(int i = 0; i < 5; i++){
         if(this->port[i].is_free == false)
@@ -178,8 +190,19 @@ void slave::print_table(void){
             cout << "| " << this->port[i].name << " | " << this->port[i].address << " |" << endl;
         }
     }
-    
+}
 
+/* Verifica se o valor de seq num recebido no pacote é coerente com o último valor de seq_num recebido em determinada porta */
+void slave::seq_num_tester(void){
+    for(int i = 0; i < 5; i++){
+        if(this->port[i].address == this->data.src_address){
+            if(this->data.seq_num != (this->port[i].seq_num + 1))
+                cout << "Valor incoerente de seq num" << endl;
+            else
+                this->port[i].seq_num++;
+            break;
+        }
+    }
 }
 
 slave::slave(void){     // Construtor
@@ -193,9 +216,19 @@ slave::slave(void){     // Construtor
 int main(void){
     slave slave_device;
     uint8_t data_1[16] = {0x00, 0x04, 0x7f, 0xe1, 0x00, 0x00, 0x00, 0x01, 0x80, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
-
+    uint8_t data_2[16] = {0x00, 0x04, 0x7f, 0xdc, 0x00, 0x00, 0x00, 0x05, 0x80, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
+    uint8_t data_3[16] = {0x00, 0x07, 0xad, 0xec, 0x00, 0x00, 0x00, 0x02, 0x00, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02};
+    uint8_t data_4[16] = {0x00, 0x07, 0x10, 0x86, 0x00, 0x00, 0x00, 0x06, 0x00, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01};
+    uint8_t data_5[16] = {0x00, 0x04, 0xfe, 0xdf, 0x00, 0x00, 0x00, 0x03, 0x01, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
+    uint8_t data_6[16] = {0x00, 0x04, 0xfe, 0xda, 0x00, 0x00, 0x00, 0x07, 0x01, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
+    
     slave_device.set_ready(1);
     slave_device.execution(data_1);
+    slave_device.execution(data_2);
+    slave_device.execution(data_3);
+    slave_device.execution(data_4);
+    slave_device.execution(data_5);
+    slave_device.execution(data_6);
 
     // slave_device.print_table();
     
