@@ -25,75 +25,123 @@ struct interface{
 /* class Slave -- Representa o switch */
 class slave{
     private:
-    message data;
-    interface port[5];
-    uint16_t checksum_calculation(uint8_t data[16]);
+    void checksum_calculation(uint8_t data, int index);
     void flag_tester(void);
     void sync_close(void);
     void seq_num_tester(void);
+    message data;
+    interface port[5];
+    uint32_t counter = 0;
+    uint32_t checksum = 0;
+    uint8_t *payload;
+
     public:
     slave(void);
     void execution(uint8_t data_bus[16]); // receives data from data_bus
-    void set_ready(bool value);
+    void new_incoming_byte(uint8_t data_bus);
+    void start(void);
+    void end(void);
     void print_data(void);
     void print_table(void);
 };
 
 /* Função responsável por realizar o desempacotamento dos campos do cabeçalho e executar rotinas de tratamento de erro */
-void slave::execution(uint8_t data_bus[16]){
-    cout << "Pacote recebido" << endl;
-    uint8_t received_buffer[16];
-    uint32_t prev_seq = this->data.seq_num;
-    for(int i = 0; i < 16; i++){
-            if(ready == 0)
-                break;
-            received_buffer[i] = data_bus[i];
+void slave::new_incoming_byte(uint8_t data_bus){
+
+    // Captura do packet lenght
+    if(this->counter == 0){
+        this->checksum = 0;
+        cout << "Pacote recebido" << endl;
+        this->data.packet_length = data_bus;
+        this->data.packet_length = this->data.packet_length << 8;
     }
-    
-    this->data.packet_length = received_buffer[0];
-    this->data.packet_length = (this->data.packet_length << 8) | received_buffer[1];
-
-    this->data.checksum = received_buffer[2];
-    this->data.checksum = (this->data.checksum << 8) | received_buffer[3];
-
-    this->data.seq_num = received_buffer[4];
-    this->data.seq_num = (this->data.seq_num << 8) | received_buffer[5];
-    this->data.seq_num = (this->data.seq_num << 8) | received_buffer[6];
-    this->data.seq_num = (this->data.seq_num << 8) | received_buffer[7];
-
-    this->data.flag = received_buffer[8];
-
-    this->flag_tester();    // Verifica se sync = 1 e close = 1
-
-    this->data.protocol = received_buffer[9];
-
-    this->data.dummy = received_buffer[10];
-    this->data.dummy = (this->data.dummy << 8) | received_buffer[11];
-
-    this->data.src_address = received_buffer[12];
-    this->data.src_address = (this->data.src_address << 8) | received_buffer[13];
-
-    this->data.dest_address = received_buffer[14];
-    this->data.dest_address = (this->data.dest_address << 8) | received_buffer[15];
-
-    if(!(this->data.checksum == this->checksum_calculation(received_buffer))){
-        cout << "Valor incoerente de checksum!" << endl;
-        errors |= (1<<1);
+    if(this->counter == 1){
+        this->data.packet_length |= data_bus;
     }
 
-    this->seq_num_tester(); // Verificador de seq_num
-    this->sync_close(); // Atualiza a tabela de endereco fisico
+    // Captura do checksum
+    if(this->counter == 2){
+        this->data.checksum = data_bus;
+        this->data.checksum = this->data.checksum << 8;
+    }
+    if(this->counter == 3){
+        this->data.checksum |= data_bus;
+    }
+
+    // Captura do seq_num
+    if(this->counter == 4){
+        this->data.seq_num = data_bus;
+        this->data.seq_num = this->data.seq_num << 8;
+    }
+    if(this->counter == 5){
+        this->data.seq_num |= data_bus;
+        this->data.seq_num = this->data.seq_num << 8;
+    }
+    if(this->counter == 6){
+        this->data.seq_num |= data_bus;
+        this->data.seq_num = this->data.seq_num << 8;
+    }
+    if(this->counter == 7){
+        this->data.seq_num |= data_bus;
+    }
+
+    // Captura da flag
+    if(this->counter == 8){
+        this->data.flag = data_bus;
+        this->flag_tester();    // Verifica se sync = 1 e close = 1
+    }
+
+    // Captura do protocol
+    if(this->counter == 9){
+        this->data.protocol = data_bus;
+    }
+
+    // Captura do dummy
+    if(this->counter == 10){
+        this->data.dummy = data_bus;
+        this->data.dummy = this->data.dummy << 8;
+    }
+    if(this->counter == 11){
+        this->data.dummy |= data_bus;
+    }
+
+    // Captura do src_address
+    if(this->counter == 12){
+        this->data.src_address = data_bus;
+        this->data.src_address = this->data.src_address << 8;
+    }
+    if(this->counter == 13){
+        this->data.src_address |= data_bus;
+    }
+
+    // Captura do dest_address
+    if(this->counter == 14){
+        this->data.dest_address = data_bus;
+        this->data.dest_address = this->data.dest_address << 8;
+    }
+    if(this->counter == 15){
+        this->data.dest_address |= data_bus;
+        this->seq_num_tester(); // Verificador de seq_num
+        this->sync_close(); // Atualiza a tabela de endereco fisico
+    }
+
+    this->checksum_calculation(data_bus,counter);
+    this->counter++;
 }
 
-/* Seta o valor de ready de acordo com o parametro de entrada */
-void slave::set_ready(bool value){
-    if (value)
-        ready = 1;
-    else
-        ready = 0;
+
+/* Inicia a comunicação */
+void slave::start(void){
+    ready = 1;
 }
 
-/* Printa individualmente os campos do cabeçalho */
+/* Termina a comunicação */
+void slave::end(void){
+    ready = 0;
+    this->counter = 0;
+}
+
+/* Printa individualmente os campos do cabeçalho do último pacote recebido */
 void slave::print_data(void){
     cout << "packet length: " << this->data.packet_length << '\n';
     cout << "checksum: " << this->data.checksum << '\n';
@@ -106,23 +154,29 @@ void slave::print_data(void){
 }
 
 /* Realiza o cálculo da checksum baseado no pacote recebido */
-uint16_t slave::checksum_calculation(uint8_t data[16]){
-    uint32_t checksum = 0;
+void slave::checksum_calculation(uint8_t data, int index){
+    static uint32_t intermed = 0;
 
-    for (int i = 0; i < 8; i ++) {
-        if (i == 1)
-            continue;
-        checksum += (uint16_t) ((data[2*i] << 8) + data[2*i + 1]);
+    if(((index % 2) == 0) & (index != 2)){
+        intermed = data;
     }
-
-    if(checksum > 0xffff){ // Tratamento de carry
-        checksum = ((checksum & 0xffff) + ((checksum >> 16) & 0xffff));
+    if(((index % 2) == 1) & (index != 3)){
+        intermed = intermed << 8;
+        intermed |= data;
+        this->checksum += intermed;
+        intermed = 0;
     }
+    if((index > 14) & (index == (this->data.packet_length*4-1))){
+        if(this->checksum > 0xffff){ // Tratamento de carry
+            this->checksum = ((this->checksum & 0xffff) + ((this->checksum >> 16) & 0xffff));
+        }
 
-    checksum = (0xffff & ~checksum);
+        this->checksum = (0xffff & ~this->checksum);
 
-    cout << "checksum function: "<< (uint16_t) checksum << "\n";
-    return (uint16_t) checksum;
+        cout << "checksum function: "<< (uint16_t) this->checksum << "\n";
+        if(this->data.checksum != (uint16_t) this->checksum)
+            cout << "Valor incoerente de checksum" << endl;
+    }
 }
 
 /* Verifica a existencia de erros no campo flag*/
@@ -162,7 +216,7 @@ void slave::sync_close(void){
     if((this->data.flag & 0b10000001) == 0b00000001){ // Mensagem de fechamento 
         for(int i = 0; i < 5; i++){
             if(this->port[i].address == this->data.src_address){
-                this->port[i].is_free == true;
+                this->port[i].is_free = true;
                 cout << "Fechamento de conexao: " << this->port[i].name << endl;
                 break;
             }
@@ -217,28 +271,38 @@ int main(void){
     slave slave_device;
     uint8_t data_1[16] = {0x00, 0x04, 0x7f, 0xe1, 0x00, 0x00, 0x00, 0x01, 0x80, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
     uint8_t data_2[16] = {0x00, 0x04, 0x7f, 0xdc, 0x00, 0x00, 0x00, 0x05, 0x80, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
-    uint8_t data_3[16] = {0x00, 0x07, 0xad, 0xec, 0x00, 0x00, 0x00, 0x02, 0x00, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02};
-    uint8_t data_4[16] = {0x00, 0x07, 0x10, 0x86, 0x00, 0x00, 0x00, 0x06, 0x00, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01};
+    uint8_t data_3[28] = {0x00, 0x07, 0xad, 0xec, 0x00, 0x00, 0x00, 0x02, 0x00, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21};
+    uint8_t data_4[28] = {0x00, 0x07, 0x10, 0x86, 0x00, 0x00, 0x00, 0x06, 0x00, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x21, 0x64, 0x6C, 0x72, 0x6F, 0x57, 0x20, 0x6F, 0x6C, 0x6C, 0x65, 0x48};
     uint8_t data_5[16] = {0x00, 0x04, 0xfe, 0xdf, 0x00, 0x00, 0x00, 0x03, 0x01, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
     uint8_t data_6[16] = {0x00, 0x04, 0xfe, 0xda, 0x00, 0x00, 0x00, 0x07, 0x01, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
     
-    slave_device.set_ready(1);
-    slave_device.execution(data_1);
-    slave_device.execution(data_2);
-    slave_device.execution(data_3);
-    slave_device.execution(data_4);
-    slave_device.execution(data_5);
-    slave_device.execution(data_6);
+    slave_device.start();
+    for(int i = 0; i < sizeof(data_1); i++){
+        slave_device.new_incoming_byte(data_1[i]);
+    }
+    slave_device.end();
 
-    // slave_device.print_table();
-    
+    slave_device.start();
+    for(int i = 0; i < sizeof(data_2); i++){
+        slave_device.new_incoming_byte(data_2[i]);
+    }
+    slave_device.end();
 
-    /*
-    start()
-    for()
-        new_incoming_byte(uint8, start, end)
-    end()
-    */
+    slave_device.print_table();
+
+    slave_device.start();
+    for(int i = 0; i < sizeof(data_3); i++){
+        slave_device.new_incoming_byte(data_3[i]);
+    }
+    slave_device.end();
+
+    slave_device.start();
+    for(int i = 0; i < sizeof(data_5); i++){
+        slave_device.new_incoming_byte(data_5[i]);
+    }
+    slave_device.end();
+
+    slave_device.print_table();
 
     return 0;
-}
+}   
