@@ -5,7 +5,6 @@
 
 using namespace std;
 
-uint8_t errors;     // Error vector
 int ready = 0;
 
 /* Struct definitions */
@@ -29,11 +28,15 @@ class slave{
     void flag_tester(void);
     void sync_close(void);
     void seq_num_tester(void);
+    void output_update(void);
     message data;
     interface port[5];
     uint32_t counter = 0;
     uint32_t checksum = 0;
     uint8_t *payload;
+    uint8_t origin_port = 0;
+    uint8_t destination_port = 0;
+    uint8_t error = 0;
 
     public:
     slave(void);
@@ -42,6 +45,12 @@ class slave{
     void end(void);
     void print_data(void);
     void print_table(void);
+    uint8_t get_origin_port();
+    uint8_t get_destination_port();
+    uint8_t get_error();
+    uint16_t get_destination_address();
+    uint16_t get_source_address();
+    
 };
 
 /* Função responsável por realizar o desempacotamento dos campos do cabeçalho e executar rotinas de tratamento de erro */
@@ -141,6 +150,9 @@ void slave::new_incoming_byte(uint8_t data_bus){
 /* Inicia a comunicação */
 void slave::start(void){
     ready = 1;
+    this->origin_port = 0;
+    this->destination_port = 0;
+    this->error = 0;
 }
 
 /* Termina a comunicação */
@@ -148,11 +160,13 @@ void slave::end(void){
     ready = 0;
     if(this->counter != (this->data.packet_length * 4)){
         cout << "Tamanho incoerente de pacote recebido" << endl;
+        this->error |= 1 << 0;
     }
     this->counter = 0;
     if(this->data.packet_length > 4){
         delete this->payload;
     }
+    
 }
 
 /* Printa individualmente os campos do cabeçalho do último pacote recebido */
@@ -187,9 +201,10 @@ void slave::checksum_calculation(uint8_t data, int index){
 
         this->checksum = (0xffff & ~this->checksum);
 
-        // cout << "checksum function: "<< (uint16_t) this->checksum << "\n";
+        cout << "checksum function: "<< (uint16_t) this->checksum << "\n";
         if(this->data.checksum != (uint16_t) this->checksum)
             cout << "Valor incoerente de checksum" << endl;
+            this->error |= 1 << 1;
     }
 }
 
@@ -204,7 +219,7 @@ void slave::sync_close(void){
     if((this->data.flag & 0b10000001) == 0b10000000){ // Mensagem de sincronização
         bool error_flag = false;
         for(int i = 0; i < 5; i++){
-            if(this->port[i].address == this->data.src_address){
+            if((this->port[i].address == this->data.src_address) & (this->port[i].is_free == false)){
                 cout << "Erro de sincronizacao. Endereço já definido na tabela" << endl;
                 error_flag = true;
                 break;
@@ -225,19 +240,45 @@ void slave::sync_close(void){
                     cout << "Todas as portas cheias" << endl;
             }
         }
+        return ;    // Cai fora da função
     }
 
     if((this->data.flag & 0b10000001) == 0b00000001){ // Mensagem de fechamento 
         for(int i = 0; i < 5; i++){
-            if(this->port[i].address == this->data.src_address){
+            if((this->port[i].address == this->data.src_address) & (this->port[i].is_free == false)){
                 this->port[i].is_free = true;
                 cout << "Fechamento de conexao: " << this->port[i].name << endl;
                 break;
             }
-            if((i == 4) & ((this->port[i].address != this->data.src_address)))
+            if((i == 4) & !((this->port[i].address == this->data.src_address) & (this->port[i].is_free == false)))
                 cout << "Endereco nao esta contido na tabela. Nao ocorrera fechamento de porta" << endl;
         }
+        return ;    // Cai fora da função
     }
+
+    for(int i = 0; i < 5; i++){ // Vai ser executado apenas se não for mensagem de sincronização ou fechamento
+        if((this->data.src_address == this->port[i].address) & (this->port[i].is_free == false))
+            break;
+        if((i == 4) & !((this->data.src_address == this->port[i].address) & (this->port[i].is_free == false))){
+            cout << "Porta de origem nao identificada" << endl;
+            this->error |= 1 << 5;
+        }
+    }
+
+
+    for(int i = 0; i < 5; i++){ // Vai ser executado apenas se não for mensagem de sincronização ou fechamento
+        if((this->data.dest_address == this->port[i].address) & (this->port[i].is_free == false)){
+            cout << "Encaminhando a mensagem para o endereco de destino" << endl;
+            this->destination_port |= 1 << i;
+            return;
+        }
+    }
+//        if((i == 4) & !((this->data.dest_address == this->port[i].address) & (this->port[i].is_free == false))){
+//        }
+//    }
+           cout << "Endereco de destino nao identificado" << endl;
+            this->error |= 1 << 4;
+ 
 }
 
 /* Constroi a tabela de roteamento de endereços físicos */
@@ -263,14 +304,55 @@ void slave::print_table(void){
 /* Verifica se o valor de seq num recebido no pacote é coerente com o último valor de seq_num recebido em determinada porta */
 void slave::seq_num_tester(void){
     for(int i = 0; i < 5; i++){
-        if(this->port[i].address == this->data.src_address){
-            if(this->data.seq_num != (this->port[i].seq_num + 1))
+        if((this->port[i].address == this->data.src_address) & (this->port[i].is_free == false)){
+            if(this->data.seq_num != (this->port[i].seq_num + 1)){
                 cout << "Valor incoerente de seq num" << endl;
+                this->error |+ 1 << 2;
+            }
             else
                 this->port[i].seq_num++;
             break;
         }
     }
+}
+
+uint8_t slave::get_origin_port(){
+    int index = 0;
+    for(int i = 0; i < 5; i++){
+        if((this->data.src_address == this->port[i].address) & (this->port[i].is_free == false)){
+            index = i;
+            break;
+        }
+    }
+    cout << (1 << index) << endl;
+    return (1 << index);
+}
+
+uint8_t slave::get_destination_port(){
+    int index = 0;
+    for(int i = 0; i < 5; i++){
+        if((this->data.dest_address == this->port[i].address) & (this->port[i].is_free == false)){
+            index = i;
+            break;
+        }
+    }
+    cout << (1 << index) << endl;
+    return (1 << index);
+}
+
+uint8_t slave::get_error(){
+    cout << this->error << endl;
+    return this->error;
+}
+
+uint16_t slave::get_destination_address(){
+    cout << this->data.dest_address << endl;
+    return this->data.dest_address;
+}
+
+uint16_t slave::get_source_address(){
+    cout << this->data.src_address << endl;
+    return this->data.src_address;
 }
 
 slave::slave(void){     // Construtor
@@ -289,12 +371,15 @@ int main(void){
     uint8_t data_4[28] = {0x00, 0x07, 0x10, 0x86, 0x00, 0x00, 0x00, 0x06, 0x00, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x21, 0x64, 0x6C, 0x72, 0x6F, 0x57, 0x20, 0x6F, 0x6C, 0x6C, 0x65, 0x48};
     uint8_t data_5[16] = {0x00, 0x04, 0xfe, 0xdf, 0x00, 0x00, 0x00, 0x03, 0x01, 0x18, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
     uint8_t data_6[16] = {0x00, 0x04, 0xfe, 0xda, 0x00, 0x00, 0x00, 0x07, 0x01, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
+    uint8_t data_7[28] = {0x00, 0x05, 0x10, 0x86, 0x00, 0x00, 0x00, 0x06, 0x00, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x21, 0x64, 0x6C, 0x72, 0x6F, 0x57, 0x20, 0x6F, 0x6C, 0x6C, 0x65, 0x48};
     
     slave_device.start();
     for(int i = 0; i < sizeof(data_1); i++)
         slave_device.new_incoming_byte(data_1[i]);
     slave_device.end();
 
+    slave_device.get_error();
+    
     slave_device.start();
     for(int i = 0; i < sizeof(data_2); i++)
         slave_device.new_incoming_byte(data_2[i]);
@@ -308,11 +393,13 @@ int main(void){
     slave_device.end();
 
     slave_device.start();
-    for(int i = 0; i < sizeof(data_5); i++)
-        slave_device.new_incoming_byte(data_5[i]);
+    for(int i = 0; i < sizeof(data_7); i++)
+        slave_device.new_incoming_byte(data_7[i]);
     slave_device.end();
+
 
     slave_device.print_table();
 
     return 0;
 }   
+
