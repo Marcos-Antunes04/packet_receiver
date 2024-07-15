@@ -37,8 +37,7 @@ class slave{
 
     public:
     slave(void);
-    void execution(uint8_t data_bus[16]); // receives data from data_bus
-    void new_incoming_byte(uint8_t data_bus);
+    void new_incoming_byte(uint8_t data_bus); // receives data from data_bus
     void start(void);
     void end(void);
     void print_data(void);
@@ -47,6 +46,9 @@ class slave{
 
 /* Função responsável por realizar o desempacotamento dos campos do cabeçalho e executar rotinas de tratamento de erro */
 void slave::new_incoming_byte(uint8_t data_bus){
+
+    if(!ready)
+        return;
 
     // Captura do packet lenght
     if(this->counter == 0){
@@ -57,6 +59,9 @@ void slave::new_incoming_byte(uint8_t data_bus){
     }
     if(this->counter == 1){
         this->data.packet_length |= data_bus;
+        if(this->data.packet_length > 4){
+            this->payload = new uint8_t [(this->data.packet_length - 4) * 4];
+        }
     }
 
     // Captura do checksum
@@ -124,11 +129,14 @@ void slave::new_incoming_byte(uint8_t data_bus){
         this->seq_num_tester(); // Verificador de seq_num
         this->sync_close(); // Atualiza a tabela de endereco fisico
     }
+    if(this->counter > 15){
+        this->payload[this->counter - 16] = data_bus;
+        cout << this->payload[this->counter - 16] << endl;
+    }
 
     this->checksum_calculation(data_bus,counter);
     this->counter++;
 }
-
 
 /* Inicia a comunicação */
 void slave::start(void){
@@ -138,7 +146,13 @@ void slave::start(void){
 /* Termina a comunicação */
 void slave::end(void){
     ready = 0;
+    if(this->counter != (this->data.packet_length * 4)){
+        cout << "Tamanho incoerente de pacote recebido" << endl;
+    }
     this->counter = 0;
+    if(this->data.packet_length > 4){
+        delete this->payload;
+    }
 }
 
 /* Printa individualmente os campos do cabeçalho do último pacote recebido */
@@ -173,7 +187,7 @@ void slave::checksum_calculation(uint8_t data, int index){
 
         this->checksum = (0xffff & ~this->checksum);
 
-        cout << "checksum function: "<< (uint16_t) this->checksum << "\n";
+        // cout << "checksum function: "<< (uint16_t) this->checksum << "\n";
         if(this->data.checksum != (uint16_t) this->checksum)
             cout << "Valor incoerente de checksum" << endl;
     }
@@ -231,7 +245,7 @@ void slave::print_table(void){
     for(int i = 0; i < 5; i++){
         if(this->port[i].is_free == false)
             break;
-        if((i == 4) & (this->port->is_free == true)){
+        if((i == 4) & (this->port[i].is_free == true)){
             cout << "Nao ha endereco armazenado na tabela" << endl;
             return ;
         }
@@ -277,29 +291,25 @@ int main(void){
     uint8_t data_6[16] = {0x00, 0x04, 0xfe, 0xda, 0x00, 0x00, 0x00, 0x07, 0x01, 0x18, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00};
     
     slave_device.start();
-    for(int i = 0; i < sizeof(data_1); i++){
+    for(int i = 0; i < sizeof(data_1); i++)
         slave_device.new_incoming_byte(data_1[i]);
-    }
     slave_device.end();
 
     slave_device.start();
-    for(int i = 0; i < sizeof(data_2); i++){
+    for(int i = 0; i < sizeof(data_2); i++)
         slave_device.new_incoming_byte(data_2[i]);
-    }
     slave_device.end();
 
     slave_device.print_table();
 
     slave_device.start();
-    for(int i = 0; i < sizeof(data_3); i++){
+    for(int i = 0; i < sizeof(data_3); i++)
         slave_device.new_incoming_byte(data_3[i]);
-    }
     slave_device.end();
 
     slave_device.start();
-    for(int i = 0; i < sizeof(data_5); i++){
+    for(int i = 0; i < sizeof(data_5); i++)
         slave_device.new_incoming_byte(data_5[i]);
-    }
     slave_device.end();
 
     slave_device.print_table();
