@@ -16,13 +16,13 @@ begin
     begin
         if(i_ready = '0') then
             counter <= (others => '0');
-        elsif(i_clk'event and i_clk = '1') then
+        elsif(rising_edge(i_clk)) then
             counter <= next_counter;
         end if;
     end process;
     
-    next_counter <= (others => '0') when counter = 1023 else
-                    counter + 1;
+    next_counter <= (others => '0') when counter = "1111111111" else
+                     std_logic_vector(unsigned(counter) + "0000000001");
                     
     -- o primeiro valor de counter a ser amostrado será counter = 1
     process(counter) -- rotina de tratamento de estado
