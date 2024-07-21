@@ -16,13 +16,13 @@ entity state_machine is
 end state_machine;
 
 architecture behavioral of state_machine is
-    signal counter, next_counter : std_logic_vector(9 downto 0); -- tamanho máximo de 1023 bytes por pactore
+    signal counter, next_counter : std_logic_vector(9 downto 0); -- tamanho máximo de 1023 bytes por pacote
 begin
-    process(i_clk, i_ready) -- ready funciona como clear assíncrono para a máquina
+    process(i_clk, i_ready) -- valid funciona como clear assíncrono para a máquina
     begin
         if(i_ready = '0') then
             counter <= (others => '0');
-        elsif(rising_edge(i_clk)) then
+        elsif(rising_edge(i_clk)) then -- verificar se é i_valid ou i_last
             counter <= next_counter;
         end if;
     end process;

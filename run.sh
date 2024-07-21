@@ -1,0 +1,1 @@
+ghdl -a *.vhd && ghdl -r tb_state_machine --vcd=state_machine.vcd --stop-time=1000ns && gtkwave state_machine.vcd

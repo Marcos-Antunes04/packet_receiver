@@ -3,32 +3,52 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity tb_state_machine is
--- Testbench não possui portas
 end tb_state_machine;
 
 architecture behavior of tb_state_machine is
-    -- Sinal de clock e ready
-    signal i_clk : std_logic := '0';
+    signal i_clk,i_valid,i_last : std_logic := '0';
     signal i_ready : std_logic := '1';
+    signal i_data : std_logic_vector(7 downto 0) := "00000000";
+    signal i_src_port, i_dest_port : std_logic_vector(4 downto 0) := "00000";
+    signal o_ready, o_valid, o_last : std_logic := '0'; 
+    signal o_data : std_logic_vector(7 downto 0) := "00000000";
+    signal o_src_addr, o_dest_addr : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal o_flags : std_logic_vector(5 downto 0) := "000000";
 
-    -- Instância do módulo a ser testado
     component state_machine
-        port(
-            i_clk : in std_logic;
-            i_ready : in std_logic
-        );
+    port(
+        -- input ports
+        i_clk, i_ready, i_valid, i_last : in std_logic;
+        i_data : in std_logic_vector(7 downto 0);
+        i_src_port, i_dest_port: in std_logic_vector(4 downto 0);
+        -- output ports        
+        o_ready, o_valid, o_last : out std_logic; 
+        o_data : out std_logic_vector(7 downto 0);
+        o_src_addr, o_dest_addr : out std_logic_vector(15 downto 0);
+        o_flags : out std_logic_vector(5 downto 0)
+    );
     end component;
 
 begin
-    -- Instanciar o módulo state_machine
     uut: state_machine
         port map (
             i_clk => i_clk,
-            i_ready => i_ready
-        );
+            i_ready => i_ready,
+            i_valid => i_valid,
+            i_last => i_last,
+            i_src_port => i_src_port,
+            i_dest_port => i_dest_port,
+            i_data => i_data,
+            o_ready => o_ready,
+            o_valid => o_valid,
+            o_last => o_last,
+            o_src_addr => o_src_addr,
+            o_dest_addr => o_dest_addr,
+            o_flags => o_flags,
+            o_data => o_data
+    );
 
-    -- Gerador de clock
-    clk_process : process
+    process
     begin
         while True loop
             i_clk <= '0';
@@ -38,22 +58,17 @@ begin
         end loop;
     end process;
 
-    -- Processo de teste
-    test_process : process
+    process
     begin
-        -- Teste com o sinal de ready ativado
         i_ready <= '1';
         wait for 50 ns;
 
-        -- Teste com o sinal de ready desativado
         i_ready <= '0';
         wait for 50 ns;
 
-        -- Teste com o sinal de ready ativado novamente
         i_ready <= '1';
         wait for 50 ns;
 
-        -- Encerrar a simulação após algum tempo
         wait;
     end process;
 
