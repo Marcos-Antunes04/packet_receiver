@@ -3,9 +3,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity state_machine is
     port(
-        i_clk : in std_logic;
-        i_ready : in std_logic
-        --  Adicionar novas portas
+        -- input ports
+        i_clk, i_ready, i_valid, i_last : in std_logic;
+        i_data : in std_logic_vector(7 downto 0);
+        i_src_port, i_dest_port: in std_logic_vector(4 downto 0);
+        -- output ports        
+        o_ready, o_valid, o_last : out std_logic; 
+        o_data : out std_logic_vector(7 downto 0);
+        o_src_addr, o_dest_addr : out std_logic_vector(15 downto 0);
+        o_flags : out std_logic_vector(5 downto 0)
     );
 end state_machine;
 
