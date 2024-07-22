@@ -15,4 +15,5 @@ ghdl --version
 ghdl -a state_machine.vhd
 ghdl -a state_machine_testbench.vhd
 ghdl -r tb_state_machine --vcd=state_machine.vcd
+gtkwave state_machine.vcd
 ```

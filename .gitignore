@@ -1,2 +1,4 @@
-work-obj93.cf
+*.cf
 *.vcd
+*.ghw
+*.fst

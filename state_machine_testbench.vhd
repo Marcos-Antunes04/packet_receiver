@@ -29,6 +29,16 @@ architecture behavior of tb_state_machine is
     );
     end component;
 
+    procedure clock_cycle_with_data(signal clk : inout std_logic; signal data : inout std_logic_vector; value : std_logic_vector) is
+    begin
+        clk <= '0';
+        wait for 1 ns;
+        data <= value;
+        wait for 1 ns;
+        clk <= '1';
+        wait for 2 ns;
+    end procedure clock_cycle_with_data;
+
 begin
     uut: state_machine
         port map (
@@ -48,26 +58,53 @@ begin
             o_data => o_data
     );
 
+
     process
     begin
         while True loop
-            i_clk <= '0';
-            wait for 10 ns;
-            i_clk <= '1';
-            wait for 10 ns;
+           -- Packet length
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"04");
+
+           -- checksum
+           clock_cycle_with_data(i_clk, i_data , X"7F");
+           clock_cycle_with_data(i_clk, i_data , X"E1");
+
+           -- seq_num
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"01");
+
+           -- clpr
+           clock_cycle_with_data(i_clk, i_data , X"80"); -- flag
+           clock_cycle_with_data(i_clk, i_data , X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"00");
+
+           -- src_addr
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"01");
+
+           -- dest_addr
+           clock_cycle_with_data(i_clk, i_data , X"00");
+           clock_cycle_with_data(i_clk, i_data , X"00");
+
         end loop;
     end process;
 
     process
     begin
         i_ready <= '1';
-        wait for 50 ns;
+        wait for 1 ns;
 
         i_ready <= '0';
-        wait for 50 ns;
+        wait for 1 ns;
 
         i_ready <= '1';
-        wait for 50 ns;
+        wait for 1000 ns;
 
         wait;
     end process;

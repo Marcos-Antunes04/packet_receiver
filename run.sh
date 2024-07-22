@@ -1,1 +1,1 @@
-ghdl -a *.vhd && ghdl -r tb_state_machine --vcd=state_machine.vcd --stop-time=1000ns && gtkwave state_machine.vcd
+ghdl -a *.vhd && ghdl -r tb_state_machine --fst=state_machine.fst --stop-time=40000ns && gtkwave state_machine.fst
