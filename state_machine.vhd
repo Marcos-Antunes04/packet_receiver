@@ -16,8 +16,29 @@ entity state_machine is
 end state_machine;
 
 architecture behavioral of state_machine is
-    signal counter, next_counter : std_logic_vector(9 downto 0); -- tamanho máximo de 1023 bytes por pacote
+    signal counter, next_counter : std_logic_vector(15 downto 0); -- tamanho máximo de pacote limitado
+    alias payload_length_error : std_logic is o_flags(0);
+    alias checksum_error : std_logic is o_flags(1);
+    alias seq_num_error : std_logic is o_flags(2);
+    alias dest_addr_not_found : std_logic is o_flags(3);
+    alias synchronization : std_logic is o_flags(4);
+    alias close : std_logic is o_flags(5);
+
+    component checksum is
+        port(
+            i_ready, i_valid, i_last : in std_logic;
+            i_counter : in std_logic_vector(15 downto 0);
+            i_data : in std_logic_vector(7 downto 0);
+            o_flag : out std_logic
+        );
+    end component;
+
+
 begin
+    
+    u1: checksum
+    port map(i_ready => i_ready, i_valid => i_valid, i_last => i_last, i_counter => counter, i_data => i_data, o_flag => checksum_error);
+
     process(i_clk, i_ready) -- valid funciona como clear assíncrono para a máquina
     begin
         if(i_ready = '0') then
