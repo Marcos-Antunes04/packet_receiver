@@ -40,7 +40,7 @@ architecture behavior of tb_state_machine is
     end procedure clock_cycle_with_data;
 
 begin
-    uut: state_machine
+    top_module: state_machine
         port map (
             i_clk => i_clk,
             i_ready => i_ready,
@@ -62,6 +62,8 @@ begin
     process
     begin
         while True loop
+           i_last <= '0';
+           wait for 10 ns;
            -- Packet length
            clock_cycle_with_data(i_clk, i_data , X"00");
            clock_cycle_with_data(i_clk, i_data , X"04");
@@ -91,6 +93,12 @@ begin
            -- dest_addr
            clock_cycle_with_data(i_clk, i_data , X"00");
            clock_cycle_with_data(i_clk, i_data , X"00");
+--           clock_cycle_with_data(i_clk, i_data , X"01");
+           wait for 10 ns;
+
+           i_last <= '1';
+
+           wait for 10000 ns;
 
         end loop;
     end process;
@@ -98,12 +106,16 @@ begin
     process
     begin
         i_ready <= '1';
+        i_valid <= '1';
+        -- i_last <= '0';
         wait for 1 ns;
 
         i_ready <= '0';
+        i_valid <= '0';
         wait for 1 ns;
 
         i_ready <= '1';
+        i_valid <= '1';
         wait for 1000 ns;
 
         wait;
