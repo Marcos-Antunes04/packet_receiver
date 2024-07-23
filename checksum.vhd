@@ -8,7 +8,7 @@ entity checksum is
         i_counter : in std_logic_vector(15 downto 0);
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
-        o_flag : out std_logic
+        o_flag : out std_logic := '0'
     );
 end checksum;
 
@@ -43,6 +43,10 @@ begin
         else -- if i_last = '1'
             if(i_counter(0) = '1') then -- Se o counter terminar em valor ímpar
                 check_value <= std_logic_vector(unsigned(check_value) + unsigned(check_intermed));
+            end if;
+
+            if(unsigned(check_value) > X"FFFF") then -- tratamento de carry
+                check_value <= std_logic_vector(unsigned(X"0000" & check_value(15 downto 0)) + unsigned(X"0000" & check_value(31 downto 16)));
             end if;
 
             if(not(check_value = X"0000ffff")) then
