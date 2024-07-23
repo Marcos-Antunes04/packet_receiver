@@ -13,7 +13,7 @@ architecture behavior of tb_state_machine is
     signal o_ready, o_valid, o_last : std_logic := '0'; 
     signal o_data : std_logic_vector(7 downto 0) := "00000000";
     signal o_src_addr, o_dest_addr : std_logic_vector(15 downto 0) := "0000000000000000";
-    signal o_flags : std_logic_vector(5 downto 0) := "000000";
+    signal o_flags : std_logic_vector(6 downto 0) := "0000000";
 
     component state_machine
     port(
@@ -25,7 +25,7 @@ architecture behavior of tb_state_machine is
         o_ready, o_valid, o_last : out std_logic; 
         o_data : out std_logic_vector(7 downto 0);
         o_src_addr, o_dest_addr : out std_logic_vector(15 downto 0);
-        o_flags : out std_logic_vector(5 downto 0)
+        o_flags : out std_logic_vector(6 downto 0)
     );
     end component;
 
