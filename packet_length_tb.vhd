@@ -2,21 +2,22 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity checksum_tb is
-end checksum_tb;
+entity packet_length_tb is
+end packet_length_tb;
 
-architecture behavior of checksum_tb is
+architecture behavior of packet_length_tb is
     signal i_clk,i_valid,i_last, i_ready : std_logic := '0';
-    signal i_data : std_logic_vector(7 downto 0) := "00000000";
-    signal o_flag : std_logic;
+    signal received_packet_length : std_logic_vector(15 downto 0) := X"0004";
+    signal o_packet_length_error : std_logic := '0';
+    signal i_data : std_logic_vector(7 downto 0);
 
-    component checksum
+    component packet_length
     port(
         -- input ports
-        i_clk, i_ready , i_valid, i_last : in std_logic;
-        i_data : in std_logic_vector(7 downto 0);
-        -- output ports        
-        o_flag : out std_logic
+        i_clk, i_ready, i_valid, i_last : in std_logic;
+        received_packet_length : in std_logic_vector(15 downto 0);
+        -- output ports
+        o_packet_length_error : out std_logic
     );
     end component;
 
@@ -31,14 +32,14 @@ architecture behavior of checksum_tb is
     end procedure clock_cycle_with_data;
 
 begin
-    top_module: checksum
+    top_module: packet_length
         port map (
             i_clk => i_clk,
             i_ready => i_ready,
             i_valid => i_valid,
             i_last => i_last,
-            i_data => i_data,
-            o_flag => o_flag
+            received_packet_length => received_packet_length,
+            o_packet_length_error => o_packet_length_error
         );
 
     process
