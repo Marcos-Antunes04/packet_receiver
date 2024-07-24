@@ -77,7 +77,6 @@ begin
            -- dest_addr
            clock_cycle_with_data(i_clk, i_data , X"00");
            clock_cycle_with_data(i_clk, i_data , X"00");
---           clock_cycle_with_data(i_clk, i_data , X"01");
            wait for 10 ns;
 
            i_last <= '1';

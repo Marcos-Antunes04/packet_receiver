@@ -13,7 +13,7 @@ end checksum;
 
 architecture behavioral of checksum is
 type state_type is (idle, msb, lsb, done_lsb, done_msb);
-signal state_reg  : state_type := lsb; -- por padrão o estado começa como par
+signal state_reg  : state_type := lsb; -- por padrão o estado começa como least significant
 signal state_next : state_type;
 signal check_value : std_logic_vector(31 downto 0) := (others => '0');
 signal check_error : std_logic := '0';
@@ -39,9 +39,9 @@ begin
                   done_msb  when i_last = '1' and state_reg = done_msb                   else
                   done_msb  when i_last = '1' and state_reg = idle and state_next = lsb  else
                   done_lsb  when i_last = '1' and state_reg = idle and state_next = msb  else
-                  msb       when state_reg = lsb                                       else
-                  lsb       when state_reg = msb                                       else
-                  msb       when state_reg = done_lsb                                  else
+                  msb       when state_reg = lsb                                         else
+                  lsb       when state_reg = msb                                         else
+                  msb       when state_reg = done_lsb                                    else
                   msb       when state_reg = done_msb;
                   
     -- operações de estado
