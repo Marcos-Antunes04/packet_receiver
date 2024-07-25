@@ -2,21 +2,31 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity checksum_tb is
-end checksum_tb;
+entity header_extractor_tb is
+end header_extractor_tb;
 
-architecture behavior of checksum_tb is
+architecture behavior of header_extractor_tb is
     signal i_clk,i_valid,i_last, i_ready : std_logic := '0';
-    signal i_data : std_logic_vector(7 downto 0) := "00000000";
-    signal o_flag : std_logic;
+    signal i_data          : std_logic_vector(7 downto 0)  := (others => '0');
+    signal o_flag          : std_logic_vector(7 downto 0)  := (others => '0');
+    signal o_packet_lenght : std_logic_vector(15 downto 0) := (others => '0');
+    signal o_seq_num       : std_logic_vector(31 downto 0) := (others => '0');
+    signal o_src_addr      : std_logic_vector(15 downto 0) := (others => '0');
+    signal o_dest_addr     : std_logic_vector(15 downto 0) := (others => '0');
+    signal o_checksum      : std_logic_vector(15 downto 0) := (others => '0');
 
-    component checksum
+    component header_extractor
     port(
         -- input ports
         i_clk, i_ready , i_valid, i_last : in std_logic;
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
-        o_flag : out std_logic
+        o_packet_length : out std_logic_vector(15 downto 0);
+        o_flag          : out std_logic_vector(07 downto 0);
+        o_seq_num       : out std_logic_vector(31 downto 0);
+        o_src_addr      : out std_logic_vector(15 downto 0);
+        o_dest_addr     : out std_logic_vector(15 downto 0);
+        o_checksum      : out std_logic_vector(15 downto 0)
     );
     end component;
 
@@ -31,14 +41,19 @@ architecture behavior of checksum_tb is
     end procedure clock_cycle_with_data;
 
 begin
-    top_module: checksum
+    top_module: header_extractor
         port map (
-            i_clk => i_clk,
-            i_ready => i_ready,
-            i_valid => i_valid,
-            i_last => i_last,
-            i_data => i_data,
-            o_flag => o_flag
+            i_clk           => i_clk,
+            i_ready         => i_ready,
+            i_valid         => i_valid,
+            i_last          => i_last,
+            i_data          => i_data,
+            o_flag          => o_flag,
+            o_packet_length => o_packet_lenght,
+            o_seq_num       => o_seq_num,
+            o_src_addr      => o_src_addr,
+            o_dest_addr     => o_dest_addr,
+            o_checksum      => o_checksum
         );
 
     process
@@ -81,7 +96,6 @@ begin
 
            i_last <= '1';
 
-           clock_cycle_with_data(i_clk, i_data , X"00");
            wait for 10000 ns;
 
         end loop;
