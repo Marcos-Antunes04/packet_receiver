@@ -6,7 +6,7 @@ entity header_extractor_tb is
 end header_extractor_tb;
 
 architecture behavior of header_extractor_tb is
-    signal i_clk,i_valid,i_last, i_ready : std_logic := '0';
+    signal i_clk,i_valid,i_last, o_ready : std_logic := '0';
     signal i_data          : std_logic_vector(7 downto 0)  := (others => '0');
     signal o_flag          : std_logic_vector(7 downto 0)  := (others => '0');
     signal o_packet_lenght : std_logic_vector(15 downto 0) := (others => '0');
@@ -18,15 +18,16 @@ architecture behavior of header_extractor_tb is
     component header_extractor
     port(
         -- input ports
-        i_clk, i_ready , i_valid, i_last : in std_logic;
+        i_clk, i_valid, i_last : in std_logic;
+        o_ready: out std_logic;
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
-        o_packet_length : out std_logic_vector(15 downto 0);
-        o_flag          : out std_logic_vector(07 downto 0);
-        o_seq_num       : out std_logic_vector(31 downto 0);
-        o_src_addr      : out std_logic_vector(15 downto 0);
-        o_dest_addr     : out std_logic_vector(15 downto 0);
-        o_checksum      : out std_logic_vector(15 downto 0)
+        o_packet_length : out std_logic_vector(15 downto 0) := (others => '0');
+        o_flag          : out std_logic_vector(07 downto 0) := (others => '0');
+        o_seq_num       : out std_logic_vector(31 downto 0) := (others => '0');
+        o_src_addr      : out std_logic_vector(15 downto 0) := (others => '0');
+        o_dest_addr     : out std_logic_vector(15 downto 0) := (others => '0');
+        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0')
     );
     end component;
 
@@ -44,7 +45,7 @@ begin
     top_module: header_extractor
         port map (
             i_clk           => i_clk,
-            i_ready         => i_ready,
+            o_ready         => o_ready,
             i_valid         => i_valid,
             i_last          => i_last,
             i_data          => i_data,
@@ -60,7 +61,7 @@ begin
     begin
         while True loop
            i_last  <= '0';
-           i_ready <= '1';
+           o_ready <= '1';
            i_valid <= '1';
            wait for 10 ns;
            -- Packet length

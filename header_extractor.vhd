@@ -5,7 +5,8 @@ use ieee.numeric_std.all;
 entity header_extractor is
     port(
         -- input ports
-        i_clk, i_ready , i_valid, i_last : in std_logic;
+        i_clk, i_valid, i_last : in std_logic;
+        o_ready: out std_logic;
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
         o_packet_length : out std_logic_vector(15 downto 0) := (others => '0');
@@ -32,7 +33,7 @@ begin
     -- atualização de estado
     process(i_clk,i_last)
     begin
-        if(i_ready = '0' or i_valid = '0') then -- sinais que funcionam como enable síncrono
+        if(i_valid = '0') then -- sinais que funcionam como enable síncrono
             state_reg <= idle;
             packet_length_reg <= packet_length_reg;
             seq_num_reg       <= seq_num_reg;

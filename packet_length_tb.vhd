@@ -6,7 +6,7 @@ entity packet_length_tb is
 end packet_length_tb;
 
 architecture behavior of packet_length_tb is
-    signal i_clk,i_valid,i_last, i_ready : std_logic := '0';
+    signal i_clk,i_valid,i_last, o_ready : std_logic := '0';
     signal received_packet_length : std_logic_vector(15 downto 0) := X"0004";
     signal o_packet_length_error : std_logic := '0';
     signal i_data : std_logic_vector(7 downto 0);
@@ -14,7 +14,8 @@ architecture behavior of packet_length_tb is
     component packet_length
     port(
         -- input ports
-        i_clk, i_ready, i_valid, i_last : in std_logic;
+        i_clk, i_valid, i_last : in std_logic;
+        o_ready : out std_logic;
         received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
         o_packet_length_error : out std_logic
@@ -35,7 +36,7 @@ begin
     top_module: packet_length
         port map (
             i_clk => i_clk,
-            i_ready => i_ready,
+            o_ready => o_ready,
             i_valid => i_valid,
             i_last => i_last,
             received_packet_length => received_packet_length,
@@ -46,7 +47,7 @@ begin
     begin
         while True loop
            i_last  <= '0';
-           i_ready <= '1';
+           o_ready <= '1';
            i_valid <= '1';
            wait for 10 ns;
            -- Packet length

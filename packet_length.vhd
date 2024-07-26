@@ -4,7 +4,8 @@ use ieee.numeric_std.all;
 entity packet_length is
     port(
         -- input ports
-        i_clk, i_ready, i_valid, i_last : in std_logic;
+        i_clk, i_valid, i_last : in std_logic;
+        o_ready : out std_logic;
         received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
         o_packet_length_error : out std_logic
@@ -19,7 +20,7 @@ begin
     begin
         if(falling_edge(i_last)) then
             counter <= (others => '0');
-        elsif(rising_edge(i_clk) and not (i_ready = '0') and not (i_valid = '0')) then
+        elsif(rising_edge(i_clk) and not (i_valid = '0')) then
             counter <= next_counter;
         end if;
     end process;

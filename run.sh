@@ -1,4 +1,7 @@
+ghdl --clean &&
 ghdl -a checksum.vhd &&
-ghdl -a state_machine.vhd && 
-ghdl -a state_machine_testbench.vhd && 
-ghdl -r tb_state_machine --vcd=state_machine.vcd --stop-time=40000ns && gtkwave state_machine.vcd
+ghdl -a header_extractor.vhd && 
+ghdl -a packet_length.vhd && 
+ghdl -a top_module.vhd &&
+ghdl -a top_module_tb.vhd &&
+ghdl -r tb_top_module --vcd=top_module.vcd --stop-time=40000ns && gtkwave top_module.vcd
