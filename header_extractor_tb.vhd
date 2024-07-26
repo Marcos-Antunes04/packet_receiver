@@ -14,6 +14,7 @@ architecture behavior of header_extractor_tb is
     signal o_src_addr      : std_logic_vector(15 downto 0) := (others => '0');
     signal o_dest_addr     : std_logic_vector(15 downto 0) := (others => '0');
     signal o_checksum      : std_logic_vector(15 downto 0) := (others => '0');
+    signal o_port_controller_clock : std_logic;
 
     component header_extractor
     port(
@@ -27,7 +28,8 @@ architecture behavior of header_extractor_tb is
         o_seq_num       : out std_logic_vector(31 downto 0) := (others => '0');
         o_src_addr      : out std_logic_vector(15 downto 0) := (others => '0');
         o_dest_addr     : out std_logic_vector(15 downto 0) := (others => '0');
-        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0')
+        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0');
+        o_port_controller_clock : out std_logic := '0'
     );
     end component;
 
@@ -54,7 +56,8 @@ begin
             o_seq_num       => o_seq_num,
             o_src_addr      => o_src_addr,
             o_dest_addr     => o_dest_addr,
-            o_checksum      => o_checksum
+            o_checksum      => o_checksum,
+            o_port_controller_clock => o_port_controller_clock
         );
 
     process

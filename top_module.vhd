@@ -40,6 +40,7 @@ architecture behavioral of top_module is
     alias close_error          : std_logic is flags(5);
     alias sync_close_error     : std_logic is flags(6);
 
+    signal link_port_controller_clock : std_logic;
     signal link_flag           : std_logic_vector(07 downto 0);
     signal link_packet_length  : std_logic_vector(15 downto 0);
     signal link_checksum       : std_logic_vector(15 downto 0);
@@ -86,7 +87,8 @@ architecture behavioral of top_module is
         o_seq_num       : out std_logic_vector(31 downto 0) := (others => '0');
         o_src_addr      : out std_logic_vector(15 downto 0) := (others => '0');
         o_dest_addr     : out std_logic_vector(15 downto 0) := (others => '0');
-        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0')
+        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0');
+        o_port_controller_clock : out std_logic := '0'
     );
     end component;
 
@@ -126,7 +128,8 @@ begin
         o_seq_num       => link_seq_num, -- vai para o port controller
         o_src_addr      => link_src_addr, -- vai para o port controller
         o_dest_addr     => o_dest_addr, -- vai para o port controller e top module
-        o_checksum      => link_checksum
+        o_checksum      => link_checksum,
+        o_port_controller_clock => link_port_controller_clock 
     );
 
 end behavioral;

@@ -9,12 +9,13 @@ entity header_extractor is
         o_ready: out std_logic;
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
-        o_packet_length : out std_logic_vector(15 downto 0) := (others => '0');
-        o_flag          : out std_logic_vector(07 downto 0) := (others => '0');
-        o_seq_num       : out std_logic_vector(31 downto 0) := (others => '0');
-        o_src_addr      : out std_logic_vector(15 downto 0) := (others => '0');
-        o_dest_addr     : out std_logic_vector(15 downto 0) := (others => '0');
-        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0')
+        o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
+        o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
+        o_seq_num               : out std_logic_vector(31 downto 0) := (others => '0');
+        o_src_addr              : out std_logic_vector(15 downto 0) := (others => '0');
+        o_dest_addr             : out std_logic_vector(15 downto 0) := (others => '0');
+        o_checksum              : out std_logic_vector(15 downto 0) := (others => '0');
+        o_port_controller_clock : out std_logic
     );
 end header_extractor;
 
@@ -28,6 +29,7 @@ signal src_addr_reg, src_addr_next           : std_logic_vector(15 downto 0) := 
 signal dest_addr_reg, dest_addr_next         : std_logic_vector(15 downto 0) := (others => '0');
 signal checksum_reg, checksum_next           : std_logic_vector(15 downto 0) := (others => '0');
 signal flag_reg, flag_next                   : std_logic_vector(07 downto 0) := (others => '0');
+signal port_controller_clock_reg,port_controller_clock_next : std_logic := '0';
 begin
 
     -- atualização de estado
@@ -41,6 +43,7 @@ begin
             dest_addr_reg     <= dest_addr_reg;
             checksum_reg      <= checksum_reg;
             flag_reg          <= flag_reg;
+            port_controller_clock_reg <= port_controller_clock_reg;
         elsif(i_last = '1') then
             state_reg <= finished;
             packet_length_reg <= packet_length_next;
@@ -49,6 +52,7 @@ begin
             dest_addr_reg     <= dest_addr_next;
             checksum_reg      <= checksum_next;
             flag_reg          <= flag_next;
+            port_controller_clock_reg <= port_controller_clock_next;
         elsif(rising_edge(i_clk)) then
             state_reg         <= state_next;
             packet_length_reg <= packet_length_next;
@@ -57,6 +61,7 @@ begin
             dest_addr_reg     <= dest_addr_next;
             checksum_reg      <= checksum_next;
             flag_reg          <= flag_next;
+            port_controller_clock_reg <= port_controller_clock_next;
         elsif(falling_edge(i_last)) then
             state_reg <= packet_length_1;
             packet_length_reg <= (others => '0');
@@ -65,6 +70,7 @@ begin
             dest_addr_reg     <= (others => '0');
             checksum_reg      <= (others => '0');
             flag_reg          <= (others => '0');
+            port_controller_clock_reg <= '0';
         end if;
     end process;
 
@@ -96,10 +102,11 @@ begin
         src_addr_next      <= src_addr_reg;
         dest_addr_next     <= dest_addr_reg;
         flag_next          <= flag_reg;
-        
+        port_controller_clock_next <= port_controller_clock_reg;
         case(state_reg) is
             -- packet length
             when packet_length_1     =>
+                port_controller_clock_next <= '0';
                 packet_length_next(15 downto 8) <= i_data;
             when packet_length_2     =>
                 packet_length_next(7 downto 0)  <= i_data;
@@ -125,12 +132,16 @@ begin
             -- flag
             when flag     =>
                 o_seq_num <= seq_num_reg;
+                port_controller_clock_next <= '1';
                 flag_next <= i_data;
 
             when protocol =>
+                port_controller_clock_next <= '0';
                 o_flag <= flag_reg;
             when dummy_1  =>
+                port_controller_clock_next <= '1';
             when dummy_2  =>
+                port_controller_clock_next <= '0';
 
             -- source address
             when source_address_1     =>
@@ -141,17 +152,21 @@ begin
             -- destination address
             when destination_address_1     =>
                 o_src_addr <= src_addr_reg;
+                port_controller_clock_next <= '1';
                 dest_addr_next(15 downto 8) <= i_data;
             when destination_address_2     =>
+                port_controller_clock_next <= '0';
                 dest_addr_next(7 downto 0)  <= i_data;
 
             -- payload
             when payload  =>
                 o_dest_addr <= dest_addr_reg;
+                port_controller_clock_next <= '1';
             
             -- finished state
             when finished =>
                 o_dest_addr <= dest_addr_reg;
+                port_controller_clock_next <= '1';
 
             -- eventually idle
             when others =>
@@ -159,4 +174,5 @@ begin
 
     end process;
 
+    o_port_controller_clock <= port_controller_clock_reg;
 end behavioral;
