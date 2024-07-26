@@ -7,7 +7,9 @@ end checksum_tb;
 
 architecture behavior of checksum_tb is
     signal i_clk,i_valid,i_last, i_ready : std_logic := '0';
-    signal i_data : std_logic_vector(7 downto 0) := "00000000";
+    signal i_data : std_logic_vector(7 downto 0) := (others => '0');
+    signal i_received_checksum : std_logic_vector(15 downto 0) := (others => '0');
+    signal o_calc_checksum : std_logic_vector(15 downto 0) := (others => '0');
     signal o_flag : std_logic;
 
     component checksum
@@ -15,7 +17,9 @@ architecture behavior of checksum_tb is
         -- input ports
         i_clk, i_ready , i_valid, i_last : in std_logic;
         i_data : in std_logic_vector(7 downto 0);
+        i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports        
+        o_calc_checksum : out std_logic_vector(15 downto 0);
         o_flag : out std_logic
     );
     end component;
@@ -37,7 +41,9 @@ begin
             i_ready => i_ready,
             i_valid => i_valid,
             i_last => i_last,
+            i_received_checksum => i_received_checksum,
             i_data => i_data,
+            o_calc_checksum => o_calc_checksum,
             o_flag => o_flag
         );
 
@@ -55,7 +61,7 @@ begin
            -- checksum
            clock_cycle_with_data(i_clk, i_data , X"7F");
            clock_cycle_with_data(i_clk, i_data , X"E1");
-
+           i_received_checksum <= X"7FE1";
            -- seq_num
            clock_cycle_with_data(i_clk, i_data , X"00");
            clock_cycle_with_data(i_clk, i_data , X"00");
@@ -81,7 +87,6 @@ begin
 
            i_last <= '1';
 
-           clock_cycle_with_data(i_clk, i_data , X"00");
            wait for 10000 ns;
 
         end loop;
