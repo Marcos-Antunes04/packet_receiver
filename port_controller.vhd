@@ -26,16 +26,16 @@ end port_controller;
 
 architecture behavioral of port_controller is
 type state_type is (idle,start, seq_num_capture, flag_capture, src_addr_capture, dest_addr_capture, finished);
-signal state_reg  : state_type := start; -- por padrão o estado começa como least significant
+signal state_reg  : state_type := start; -- por padrão, o estado começa como least significant
 signal state_next : state_type;
-signal open_ports_reg, open_ports_next : std_logic_vector(4 downto 0) := (others => '1'); -- por padrão, todas as portas são inicializadas livres
-signal src_addr_reg, src_addr_next : std_logic_vector(15 downto 0)    := (others => '0');
-signal dest_addr_reg, dest_addr_next : std_logic_vector(15 downto 0)  := (others => '0');
-signal dest_port_reg, dest_port_next : std_logic_vector(4 downto 0)   := (others => '0');
-signal seq_num_reg, seq_num_next : std_logic_vector(31 downto 0) := (others => '0');
-signal flag_reg, flag_next : std_logic_vector(7 downto 0);
-type port_addr is array(4 downto 0) of std_logic_vector(15 downto 0); -- um array de endereços. cada endereço associado a uma porta
-type seq_num is array(4 downto 0) of std_logic_vector(31 downto 0);   -- um array de seq_nums. cada seq_num associado a uma porta
+signal open_ports_reg, open_ports_next : std_logic_vector(4 downto 0)      := (others => '1'); -- por padrão, todas as portas são inicializadas livres
+signal src_addr_reg, src_addr_next : std_logic_vector(15 downto 0)         := (others => '0');
+signal dest_addr_reg, dest_addr_next : std_logic_vector(15 downto 0)       := (others => '0');
+signal dest_port_reg, dest_port_next : std_logic_vector(4 downto 0)        := (others => '0');
+signal seq_num_reg, seq_num_next : std_logic_vector(31 downto 0)           := (others => '0');
+signal flag_reg, flag_next : std_logic_vector(7 downto 0)                  := (others => '0');
+signal mem_seq_num_reg, mem_seq_num_next : std_logic_vector(159 downto 0)  := (others => '0');
+signal mem_src_addr_reg, mem_src_addr_next : std_logic_vector(79 downto 0) := (others => '0');
 
 begin
 
@@ -44,28 +44,37 @@ begin
     begin
         if(i_ready = '0') then
             state_reg <= idle;
-            open_ports_reg <= open_ports_reg;
-            flag_reg       <= flag_reg;
-            src_addr_reg   <= src_addr_reg;
-            dest_addr_reg  <= dest_addr_reg;
-            seq_num_reg    <= seq_num_reg;
-            dest_port_reg  <= dest_port_reg;
+            open_ports_reg   <= open_ports_reg;
+            flag_reg         <= flag_reg;
+            src_addr_reg     <= src_addr_reg;
+            dest_addr_reg    <= dest_addr_reg;
+            seq_num_reg      <= seq_num_reg;
+            dest_port_reg    <= dest_port_reg;
+            -- valores de seq_num e src_addr armazenados na tabela de roteamento
+            mem_src_addr_reg <= mem_src_addr_reg;
+            mem_seq_num_reg  <=  mem_seq_num_reg;
         elsif(rising_edge(i_port_clock_controller)) then
-            state_reg      <= state_next;
-            open_ports_reg <= open_ports_next;
-            flag_reg       <= flag_next;
-            src_addr_reg   <= src_addr_next;
-            dest_addr_reg  <= dest_addr_next;
-            seq_num_reg    <= seq_num_next;
-            dest_port_reg  <= dest_port_next;
-        elsif(falling_edge(i_port_clock_controller)) then
+            state_reg        <= state_next;
+            open_ports_reg   <= open_ports_next;
+            flag_reg         <= flag_next;
+            src_addr_reg     <= src_addr_next;
+            dest_addr_reg    <= dest_addr_next;
+            seq_num_reg      <= seq_num_next;
+            dest_port_reg    <= dest_port_next;
+            -- valores de seq_num e src_addr armazenados na tabela de roteamento
+            mem_src_addr_reg <= mem_src_addr_reg;
+            mem_seq_num_reg  <= mem_seq_num_reg;
+        elsif(falling_edge(i_last)) then
             state_reg <= start;
-            open_ports_reg <= (others => '0');
-            flag_reg       <= (others => '0');
-            src_addr_reg   <= (others => '0');
-            dest_addr_reg  <= (others => '0');
-            seq_num_reg    <= (others => '0');
-            dest_port_reg  <= (others => '0');
+            open_ports_reg   <= (others => '0');
+            flag_reg         <= (others => '0');
+            src_addr_reg     <= (others => '0');
+            dest_addr_reg    <= (others => '0');
+            seq_num_reg      <= (others => '0');
+            dest_port_reg    <= (others => '0');
+            -- valores de seq_num e src_addr armazenados na tabela de roteamento
+            mem_src_addr_reg <= mem_src_addr_next;
+            mem_seq_num_reg  <= mem_seq_num_next;
         end if;
     end process;
 
@@ -89,6 +98,7 @@ begin
             dest_port_next  <= dest_port_reg;
 
         case state_reg is
+            -- início do pacote
             when start =>
                 o_dest_port      <= (others => '0');
                 o_dest_addr      <= (others => '0');
@@ -97,27 +107,99 @@ begin
                 sync_error       <= '0';
                 close_error      <= '0';
                 sync_close_error <= '0';
+
+            -- capturad do sequence number
             when seq_num_capture   =>
                 seq_num_next <= i_seq_num;
+
+            -- capturad do flag
             when flag_capture      =>
                 flag_next <= i_flag;
+
+            -- capturad do source address
+            when src_addr_capture  =>
+                src_addr_next <= i_src_addr;
+
+            -- capturad do destination address
+            when dest_addr_capture =>
+                dest_addr_next <= i_dest_addr;
+            
+            -- envio de pacote finalizado
+            when finished          =>
+
+                -- tratamento de mensagem de sincronização
                 if(flag_reg(7) = '1' and flag_reg(0) = '0' and ((i_src_port and open_ports_reg) = "00000")) then
                     sync_error <= '1';
                 else
                     open_ports_next <= open_ports_reg and not i_src_port;
+
+                    case i_src_port is
+                        when "00001" => 
+                            mem_src_addr_next(15 downto 00) <= src_addr_reg;
+                            mem_seq_num_next(31 downto 00) <= seq_num_reg;
+                        when "00010" => 
+                            mem_src_addr_next(31 downto 16) <= src_addr_reg;
+                            mem_seq_num_next(63 downto 32) <= seq_num_reg;
+                        when "00100" => 
+                            mem_src_addr_next(47 downto 32) <= src_addr_reg;
+                            mem_seq_num_next(95 downto 64) <= seq_num_reg;
+                        when "01000" => 
+                            mem_src_addr_next(63 downto 48) <= src_addr_reg;
+                            mem_seq_num_next(127 downto 96) <= seq_num_reg;
+                        when "10000" => 
+                            mem_src_addr_next(79 downto 64) <= src_addr_reg;
+                            mem_seq_num_next(159 downto 128) <= seq_num_reg;
+                        when others =>
+                    end case;
                     
                 end if;
 
+                -- tratamento de mensagem de fechamento
                 if(flag_reg(7) = '0' and flag_reg(0) = '1' and not ((i_src_port and open_ports_reg) = "00000")) then
                     close_error <= '1';
+                else
+                    open_ports_next <= open_ports_reg or i_src_port;
                 end if;
-            when src_addr_capture  =>
-                src_addr_next <= i_src_addr;
-            when dest_addr_capture =>
-                dest_addr_next <= i_dest_addr;
-            when finished          =>
 
-            
+
+                -- caso em que não se trata de mensagem de sincronização ou fechamento
+                if(not(flag_reg(7) = '1' or flag_reg(0) = '1') and not ((i_src_port and open_ports_reg) = "00000")) then
+                    case i_src_port is
+                        when "00001" => 
+                            if(not(unsigned(mem_seq_num_next(31 downto 00)) = unsigned(mem_seq_num_reg(31 downto 00)) + 1)) then
+                                seq_num_error <= '1';
+                            end if;
+                        when "00010" => 
+                            if(not(unsigned(mem_seq_num_next(63 downto 32)) = unsigned(mem_seq_num_reg(63 downto 32)) + 1)) then
+                                seq_num_error <= '1';
+                            end if;
+                        when "00100" => 
+                            if(not(unsigned(mem_seq_num_next(95 downto 64)) = unsigned(mem_seq_num_reg(95 downto 64)) + 1)) then
+                                seq_num_error <= '1';
+                            end if;
+                        when "01000" => 
+                            if(not(unsigned(mem_seq_num_next(127 downto 96)) = unsigned(mem_seq_num_reg(127 downto 96)) + 1)) then
+                                seq_num_error <= '1';
+                            end if;
+                        when "10000" => 
+                            if(not(unsigned(mem_seq_num_next(159 downto 128)) = unsigned(mem_seq_num_reg(159 downto 128)) + 1)) then
+                                seq_num_error <= '1';
+                            end if;
+                        when others =>
+                    end case;
+
+                    -- destination address not found error 
+                    if(dest_addr_reg = mem_src_addr_reg(15 downto 00)) then 
+                    elsif(dest_addr_reg = mem_src_addr_reg(15 downto 00)) then
+                    elsif(dest_addr_reg = mem_src_addr_reg(31 downto 16)) then
+                    elsif(dest_addr_reg = mem_src_addr_reg(47 downto 32)) then
+                    elsif(dest_addr_reg = mem_src_addr_reg(63 downto 48)) then
+                    elsif(dest_addr_reg = mem_src_addr_reg(79 downto 64)) then
+                    else
+                        dest_addr_error <= '1';
+                    end if;
+                end if;
+
             when others =>
         end case;
     end process;
