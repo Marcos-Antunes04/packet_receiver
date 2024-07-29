@@ -92,6 +92,29 @@ architecture behavioral of top_module is
     );
     end component;
 
+    component port_controller
+    port(
+        -- input ports
+        i_valid, i_last         : in std_logic;
+        o_ready                 : out std_logic;
+        i_src_port              : in std_logic_vector(4 downto 0);
+        i_port_clock_controller : in std_logic;
+        i_flag                  : in std_logic_vector(07 downto 0) := (others => '0');
+        i_seq_num               : in std_logic_vector(31 downto 0) := (others => '0');
+        i_src_addr              : in std_logic_vector(15 downto 0) := (others => '0');
+        i_dest_addr             : in std_logic_vector(15 downto 0) := (others => '0');
+
+        -- output ports
+        o_dest_port      : out std_logic_vector(04 downto 0) := (others => '0');
+        o_dest_addr      : out std_logic_vector(15 downto 0) := (others => '0');
+        seq_num_error    : out std_logic := '0';
+        dest_addr_error  : out std_logic := '0';
+        sync_error       : out std_logic := '0';
+        close_error      : out std_logic := '0';
+        sync_close_error : out std_logic := '0'
+    );
+    end component;
+
 begin
 
     module_checksum: checksum
@@ -130,6 +153,26 @@ begin
         o_dest_addr     => o_dest_addr, -- vai para o port controller e top module
         o_checksum      => link_checksum,
         o_port_controller_clock => link_port_controller_clock 
+    );
+
+    module_port_controller: port_controller
+    port map (
+        i_port_clock_controller  => link_port_controller_clock,
+        o_ready                  => slave_o_ready,
+        i_valid                  => slave_i_valid,
+        i_last                   => slave_i_last,
+        i_flag                   => link_flag, -- vai para o port controller
+        i_seq_num                => link_seq_num, -- vai para o port controller
+        i_src_addr               => link_src_addr, -- vai para o port controller
+        i_dest_addr              => o_dest_addr,
+        i_src_port               => i_src_port,
+        o_dest_addr              => o_dest_addr, -- vai para o port controller e top module
+        o_dest_port              => o_dest_port,
+        seq_num_error            => seq_num_error,
+        dest_addr_error          => dest_addr_not_found,
+        sync_error               => sync_error,
+        close_error              => close_error,
+        sync_close_error         => seq_num_error 
     );
 
 end behavioral;

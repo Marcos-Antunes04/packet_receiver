@@ -84,6 +84,7 @@ begin
     process
     begin
         while True loop
+           i_src_port <= "00001";
            slave_i_last <= '0';
            wait for 10 ns;
            -- Packet length
