@@ -116,11 +116,62 @@ begin
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
---           clock_cycle_with_data(i_clk, i_data , X"01");
-           wait for 10 ns;
-
+           
+           wait for 20 ns;
            slave_i_last <= '1';
+           wait for 20 ns;
+           slave_i_last <= '0';
+           wait for 20 ns;
 
+
+            -- new transmission
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"07");
+
+           -- checksum
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"AD");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"EC");
+
+           -- seq_num
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"02");
+
+           -- clpr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00"); -- flag
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+
+           -- src_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"01");
+
+           -- dest_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"02");
+
+           -- payload
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"48");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"65");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6F");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"20");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"57");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6F");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"72");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"64");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"21");
+
+           wait for 20 ns;
+           slave_i_last <= '1';
            wait for 10000 ns;
 
         end loop;

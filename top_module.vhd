@@ -46,6 +46,7 @@ architecture behavioral of top_module is
     signal link_checksum       : std_logic_vector(15 downto 0);
     signal link_src_addr       : std_logic_vector(15 downto 0);
     signal link_seq_num        : std_logic_vector(31 downto 0);
+    signal link_dest_addr      : std_logic_vector(15 downto 0);
     signal o_dest_port         : std_logic_vector(04 downto 0);
     signal o_dest_addr         : std_logic_vector(15 downto 0);
     signal o_calc_checksum     : std_logic_vector(15 downto 0);
@@ -126,7 +127,7 @@ begin
         i_received_checksum => link_checksum,
         i_data => slave_i_data,
         o_calc_checksum => o_calc_checksum,
-        o_flag => checksum_error -- vai para as flags de erro
+        o_flag => checksum_error 
     );
 
     module_packet_length: packet_length
@@ -136,7 +137,7 @@ begin
         i_valid => slave_i_valid,
         i_last => slave_i_last,
         received_packet_length => link_packet_length,
-        o_packet_length_error => packet_length_error -- vai para as flags de erro
+        o_packet_length_error => packet_length_error 
     );
 
     module_header_extractor: header_extractor
@@ -146,11 +147,11 @@ begin
         i_valid         => slave_i_valid,
         i_last          => slave_i_last,
         i_data          => slave_i_data,
-        o_flag          => link_flag, -- vai para o port controller
+        o_flag          => link_flag, 
         o_packet_length => link_packet_length,
-        o_seq_num       => link_seq_num, -- vai para o port controller
-        o_src_addr      => link_src_addr, -- vai para o port controller
-        o_dest_addr     => o_dest_addr, -- vai para o port controller e top module
+        o_seq_num       => link_seq_num, 
+        o_src_addr      => link_src_addr, 
+        o_dest_addr     => link_dest_addr, 
         o_checksum      => link_checksum,
         o_port_controller_clock => link_port_controller_clock 
     );
@@ -161,12 +162,12 @@ begin
         o_ready                  => slave_o_ready,
         i_valid                  => slave_i_valid,
         i_last                   => slave_i_last,
-        i_flag                   => link_flag, -- vai para o port controller
-        i_seq_num                => link_seq_num, -- vai para o port controller
-        i_src_addr               => link_src_addr, -- vai para o port controller
-        i_dest_addr              => o_dest_addr,
+        i_flag                   => link_flag, 
+        i_seq_num                => link_seq_num, 
+        i_src_addr               => link_src_addr, 
+        i_dest_addr              => link_dest_addr,
         i_src_port               => i_src_port,
-        o_dest_addr              => o_dest_addr, -- vai para o port controller e top module
+        o_dest_addr              => o_dest_addr,
         o_dest_port              => o_dest_port,
         seq_num_error            => seq_num_error,
         dest_addr_error          => dest_addr_not_found,

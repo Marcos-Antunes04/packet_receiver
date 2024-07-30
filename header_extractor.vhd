@@ -30,6 +30,7 @@ signal dest_addr_reg, dest_addr_next         : std_logic_vector(15 downto 0) := 
 signal checksum_reg, checksum_next           : std_logic_vector(15 downto 0) := (others => '0');
 signal flag_reg, flag_next                   : std_logic_vector(07 downto 0) := (others => '0');
 signal port_controller_clock_reg,port_controller_clock_next : std_logic := '0';
+signal estado : std_logic_vector(4 downto 0);
 begin
 
     -- atualização de estado
@@ -90,19 +91,41 @@ begin
                   source_address_2      when state_reg = source_address_1      else
                   destination_address_1 when state_reg = source_address_2      else
                   destination_address_2 when state_reg = destination_address_1 else
-                  payload               when state_reg = destination_address_2;
+                  payload               when state_reg = destination_address_2 else
+                  payload               when state_reg = payload;
+
+    estado <= "00001"  when state_reg = packet_length_1       else
+              "00010"  when state_reg = packet_length_2       else
+              "00011"  when state_reg = checksum_1            else 
+              "00100"  when state_reg = checksum_2            else
+              "00101"  when state_reg = seq_num_1             else
+              "00110"  when state_reg = seq_num_2             else
+              "00111"  when state_reg = seq_num_3             else
+              "01000"  when state_reg = seq_num_4             else
+              "01001"  when state_reg = flag                  else
+              "01010"  when state_reg = protocol              else
+              "01011"  when state_reg = dummy_1               else
+              "01100"  when state_reg = dummy_2               else
+              "01101"  when state_reg = source_address_1      else
+              "01110"  when state_reg = source_address_2      else
+              "01111"  when state_reg = destination_address_1 else
+              "10000"  when state_reg = destination_address_2 else
+              "10001"  when state_reg = payload               else
+              "10010"  when state_reg = idle;
+
                   
     -- operações de estado
     process(state_reg, packet_length_reg,checksum_reg,seq_num_reg,src_addr_reg,dest_addr_reg, flag_reg, i_data)
     begin
         -- dafault values
-        packet_length_next <= packet_length_reg;
-        checksum_next      <= checksum_reg;
-        seq_num_next       <= seq_num_reg;
-        src_addr_next      <= src_addr_reg;
-        dest_addr_next     <= dest_addr_reg;
-        flag_next          <= flag_reg;
+        packet_length_next         <= packet_length_reg;
+        checksum_next              <= checksum_reg;
+        seq_num_next               <= seq_num_reg;
+        src_addr_next              <= src_addr_reg;
+        dest_addr_next             <= dest_addr_reg;
+        flag_next                  <= flag_reg;
         port_controller_clock_next <= port_controller_clock_reg;
+
         case(state_reg) is
             -- packet length
             when packet_length_1     =>

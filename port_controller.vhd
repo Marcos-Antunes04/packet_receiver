@@ -53,6 +53,17 @@ begin
             -- valores de seq_num e src_addr armazenados na tabela de roteamento
             mem_src_addr_reg <= mem_src_addr_reg;
             mem_seq_num_reg  <= mem_seq_num_reg;
+        elsif(i_last = '1') then
+            state_reg        <= state_next;
+            open_ports_reg   <= open_ports_next;
+            flag_reg         <= flag_next;
+            src_addr_reg     <= src_addr_next;
+            dest_addr_reg    <= dest_addr_next;
+            seq_num_reg      <= seq_num_next;
+            dest_port_reg    <= dest_port_next;
+            -- valores de seq_num e src_addr armazenados na tabela de roteamento
+            mem_src_addr_reg <= mem_src_addr_reg;
+            mem_seq_num_reg  <= mem_seq_num_reg;
         elsif(rising_edge(i_port_clock_controller)) then
             state_reg        <= state_next;
             open_ports_reg   <= open_ports_next;
@@ -65,8 +76,8 @@ begin
             mem_src_addr_reg <= mem_src_addr_reg;
             mem_seq_num_reg  <= mem_seq_num_reg;
         elsif(falling_edge(i_last)) then
-            state_reg <= start;
-            open_ports_reg   <= (others => '0');
+            state_reg        <= start;
+            open_ports_reg   <= open_ports_next;
             flag_reg         <= (others => '0');
             src_addr_reg     <= (others => '0');
             dest_addr_reg    <= (others => '0');
@@ -123,11 +134,12 @@ begin
             -- captura do destination address
             when dest_addr_capture =>
                 dest_addr_next <= i_dest_addr;
+                o_dest_addr <= dest_addr_next;
                 -- tratamento de mensagem de sincronização
                 if(flag_reg(7) = '1' and flag_reg(0) = '0' and ((i_src_port and open_ports_reg) = "00000")) then
                     sync_error <= '1';
                 else
-                    open_ports_next <= open_ports_reg and (not i_src_port);
+                    open_ports_next <= (open_ports_reg and (not i_src_port));
 
                     case i_src_port is
                         when "00001" => 
@@ -153,9 +165,11 @@ begin
 
                 -- tratamento de mensagem de fechamento
                 if(flag_reg(7) = '0' and flag_reg(0) = '1' and not ((i_src_port and open_ports_reg) = "00000")) then
-                    close_error <= '1';
-                else
-                    open_ports_next <= open_ports_reg or i_src_port;
+                    if(not ((i_src_port and open_ports_reg) = "00000")) then
+                        close_error <= '1';
+                    else
+                        open_ports_next <= open_ports_reg or i_src_port;
+                    end if;
                 end if;
 
                 -- caso em que não se trata de mensagem de sincronização ou fechamento
@@ -201,7 +215,6 @@ begin
         end case;
     end process;
 
-    o_dest_addr <= dest_addr_reg;
     
     sync_close_error <= '1' when (flag_reg(7) = '1' and flag_reg(0) = '1') else
                         '0';
