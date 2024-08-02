@@ -117,7 +117,7 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            
-           wait for 20 ns;
+           wait for 15 ns;
            slave_i_last <= '1';
            wait for 20 ns;
            slave_i_last <= '0';
@@ -170,7 +170,7 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"64");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"21");
 
-           wait for 20 ns;
+           wait for 15 ns;
            slave_i_last <= '1';
            wait for 10000 ns;
 

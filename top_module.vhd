@@ -173,7 +173,7 @@ begin
         dest_addr_error          => dest_addr_not_found,
         sync_error               => sync_error,
         close_error              => close_error,
-        sync_close_error         => seq_num_error 
+        sync_close_error         => sync_close_error 
     );
 
 end behavioral;
