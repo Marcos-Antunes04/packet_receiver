@@ -10,7 +10,7 @@ architecture behavior of checksum_tb is
     signal i_data : std_logic_vector(7 downto 0) := (others => '0');
     signal i_received_checksum : std_logic_vector(15 downto 0) := (others => '0');
     signal o_calc_checksum : std_logic_vector(15 downto 0) := (others => '0');
-    signal o_flag : std_logic;
+    signal o_checksum_error : std_logic;
 
     component checksum
     port(
@@ -21,7 +21,7 @@ architecture behavior of checksum_tb is
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum : out std_logic_vector(15 downto 0);        
-        o_flag : out std_logic
+        o_checksum_error : out std_logic
     );
     end component;
 
@@ -45,7 +45,7 @@ begin
             i_received_checksum => i_received_checksum,
             i_data => i_data,
             o_calc_checksum => o_calc_checksum,
-            o_flag => o_flag
+            o_checksum_error => o_checksum_error
         );
 
     process

@@ -10,13 +10,13 @@ entity checksum is
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum : out std_logic_vector(15 downto 0);        
-        o_flag : out std_logic
+        o_checksum_error : out std_logic
     );
 end checksum;
 
 architecture behavioral of checksum is
 type state_type is (idle, msb, lsb, done_lsb, done_msb);
-signal state_reg  : state_type := msb; -- por padrão o estado começa como least significant
+signal state_reg  : state_type := msb; -- por padrão o estado começa como most significant
 signal state_next : state_type;
 signal check_value_reg, check_value_next : std_logic_vector(31 downto 0) := (others => '0');
 signal check_error_reg, check_error_next : std_logic := '0';
@@ -44,13 +44,13 @@ begin
             check_value_reg    <= check_value_next   ;
             check_error_reg    <= check_error_next   ;
             check_intermed_reg <= check_intermed_next;
-            check_calc_reg    <= check_calc_next    ;
+            check_calc_reg    <= check_calc_next     ;
         elsif(i_last = '1' and state_reg = msb) then
             state_reg <= done_msb;
             check_value_reg    <= check_value_next   ;
             check_error_reg    <= check_error_next   ;
             check_intermed_reg <= check_intermed_next;
-            check_calc_reg    <= check_calc_next    ;
+            check_calc_reg    <= check_calc_next     ;
         elsif(falling_edge(i_last)) then
             state_reg <= msb;
             check_value_reg    <= (others => '0');
@@ -85,34 +85,39 @@ begin
             when lsb =>
                 check_value_next <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg & i_data));
                 check_calc_next  <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg & i_data) - unsigned(i_received_checksum));
-                when done_msb =>
+            when done_msb =>
                 check_calc_next <= std_logic_vector(unsigned(check_value_reg)  + unsigned(check_intermed_reg) - unsigned(i_received_checksum));
                 check_value_next <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg));
             when others =>
         end case;
 
-        if((unsigned(check_value_reg) > X"FFFF") and (state_reg = done_msb or state_reg = done_lsb)) then
-            check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
-        end if;
+        if((state_reg = done_msb or state_reg = done_lsb)) then
+            if((unsigned(check_value_reg) > X"FFFF")) then
+                check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
+                if((unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16))) = X"0000FFFF") then
+                    check_error_next <= '0';
+                else
+                    check_error_next <= '1';
+                end if;
+            else
+                if((unsigned(X"0000" & check_value_reg(15 downto 0))) = X"0000FFFF") then
+                    check_error_next <= '0';
+                else
+                    check_error_next <= '1';
+                end if;
+            end if;
 
-        if((unsigned(check_calc_reg) > X"FFFF") and (state_reg = done_msb or state_reg = done_lsb)) then
-            check_calc_next <= std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16)));
-        end if;
+            if((unsigned(check_calc_reg) > X"FFFF")) then
+                check_calc_next <= not(std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16))));
+            else
+                check_calc_next <= not(std_logic_vector(unsigned(check_calc_reg)));
+            end if;
 
-        if(not(check_value_reg = X"0000ffff") and (state_reg = done_msb or state_reg = done_lsb)) then
-            check_error_next <= '1';
-        else
-
-        check_error_next <= '0';
         end if;
         
-        if(state_reg = done_msb or state_reg = done_lsb) then
-            check_value_next <= (others => '0');
-            check_calc_next <= not(check_calc_reg);
-        end if;
     end process;
 
-    o_flag <= check_error_next;
+    o_checksum_error <= check_error_next;
     o_calc_checksum <= check_calc_next(15 downto 0);
 
 end behavioral;

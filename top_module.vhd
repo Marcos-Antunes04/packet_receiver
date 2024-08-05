@@ -61,7 +61,7 @@ architecture behavioral of top_module is
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum : out std_logic_vector(15 downto 0);        
-        o_flag : out std_logic
+        o_checksum_error : out std_logic
     );
     end component;
 
@@ -120,39 +120,39 @@ begin
 
     module_checksum: checksum
     port map (
-        i_clk => slave_i_clk,
-        o_ready => slave_o_ready,
-        i_valid => slave_i_valid,
-        i_last => slave_i_last,
+        i_clk               => slave_i_clk,
+        o_ready             => slave_o_ready,
+        i_valid             => slave_i_valid,
+        i_last              => slave_i_last,
         i_received_checksum => link_checksum,
-        i_data => slave_i_data,
-        o_calc_checksum => o_calc_checksum,
-        o_flag => checksum_error 
+        i_data              => slave_i_data,
+        o_calc_checksum     => o_calc_checksum,
+        o_checksum_error    => checksum_error 
     );
 
     module_packet_length: packet_length
     port map (
-        i_clk => slave_i_clk,
-        o_ready => slave_o_ready,
-        i_valid => slave_i_valid,
-        i_last => slave_i_last,
+        i_clk                  => slave_i_clk,
+        o_ready                => slave_o_ready,
+        i_valid                => slave_i_valid,
+        i_last                 => slave_i_last,
         received_packet_length => link_packet_length,
-        o_packet_length_error => packet_length_error 
+        o_packet_length_error  => packet_length_error 
     );
 
     module_header_extractor: header_extractor
     port map (
-        i_clk           => slave_i_clk,
-        o_ready         => slave_o_ready,
-        i_valid         => slave_i_valid,
-        i_last          => slave_i_last,
-        i_data          => slave_i_data,
-        o_flag          => link_flag, 
-        o_packet_length => link_packet_length,
-        o_seq_num       => link_seq_num, 
-        o_src_addr      => link_src_addr, 
-        o_dest_addr     => link_dest_addr, 
-        o_checksum      => link_checksum,
+        i_clk                   => slave_i_clk,
+        o_ready                 => slave_o_ready,
+        i_valid                 => slave_i_valid,
+        i_last                  => slave_i_last,
+        i_data                  => slave_i_data,
+        o_flag                  => link_flag, 
+        o_packet_length         => link_packet_length,
+        o_seq_num               => link_seq_num, 
+        o_src_addr              => link_src_addr, 
+        o_dest_addr             => link_dest_addr, 
+        o_checksum              => link_checksum,
         o_port_controller_clock => link_port_controller_clock 
     );
 
