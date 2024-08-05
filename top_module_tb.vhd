@@ -87,6 +87,7 @@ begin
            i_src_port <= "00001";
            slave_i_last <= '0';
            wait for 10 ns;
+
            -- Packet length
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"04");
@@ -122,7 +123,6 @@ begin
            wait for 20 ns;
            slave_i_last <= '0';
            wait for 20 ns;
-
 
             -- new transmission
 
@@ -172,8 +172,45 @@ begin
 
            wait for 15 ns;
            slave_i_last <= '1';
-           wait for 10000 ns;
+           wait for 20 ns;
+           slave_i_last <= '0';
+           wait for 20 ns;
 
+            -- new transmission
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"04");
+
+           -- checksum
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"FE");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"DF");
+
+           -- seq_num
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"03");
+
+           -- clpr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"01"); -- flag
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+
+           -- src_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"01");
+
+           -- dest_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           
+           wait for 15 ns;
+
+           slave_i_last <= '1';
+           wait for 10000 ns;
         end loop;
     end process;
 
