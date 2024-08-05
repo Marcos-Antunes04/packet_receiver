@@ -181,8 +181,8 @@ begin
                             when others =>
                         end case;
                     end if;
-                    
-                -- se for mensagem de sincronização ou fechamento o seq_num será analisado
+
+                -- se for mensagem de payload ou fechamento o seq_num será analisado
                 elsif((flag_reg(7) = '0') and ((i_src_port and open_ports_reg) = "00000")) then
                     case i_src_port is
                         when "00001" => 
@@ -230,15 +230,15 @@ begin
                 -- caso em que não se trata de mensagem de sincronização ou fechamento
                 if(not(flag_reg(7) = '1' or flag_reg(0) = '1') and ((i_src_port and open_ports_reg) = "00000")) then
                     -- destination address not found error 
-                    if   (dest_addr_reg = mem_src_addr_reg(15 downto 00) and open_ports_reg(0) = '0') then
+                    if   (i_dest_addr = mem_src_addr_reg(15 downto 00) and open_ports_reg(0) = '0') then
                         dest_port_next <= "00001"; 
-                    elsif(dest_addr_reg = mem_src_addr_reg(31 downto 16) and open_ports_reg(1) = '0') then
+                    elsif(i_dest_addr = mem_src_addr_reg(31 downto 16) and open_ports_reg(1) = '0') then
                         dest_port_next <= "00010"; 
-                    elsif(dest_addr_reg = mem_src_addr_reg(47 downto 32) and open_ports_reg(2) = '0') then
+                    elsif(i_dest_addr = mem_src_addr_reg(47 downto 32) and open_ports_reg(2) = '0') then
                         dest_port_next <= "00100"; 
-                    elsif(dest_addr_reg = mem_src_addr_reg(63 downto 48) and open_ports_reg(3) = '0') then
+                    elsif(i_dest_addr = mem_src_addr_reg(63 downto 48) and open_ports_reg(3) = '0') then
                         dest_port_next <= "01000"; 
-                    elsif(dest_addr_reg = mem_src_addr_reg(79 downto 64) and open_ports_reg(4) = '0') then
+                    elsif(i_dest_addr = mem_src_addr_reg(79 downto 64) and open_ports_reg(4) = '0') then
                         dest_port_next <= "10000"; 
                     else
                         dest_addr_error_next <= '1';

@@ -88,6 +88,8 @@ begin
            slave_i_last <= '0';
            wait for 10 ns;
 
+           -- conexão SA=1
+
            -- Packet length
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"04");
@@ -122,9 +124,52 @@ begin
            slave_i_last <= '1';
            wait for 20 ns;
            slave_i_last <= '0';
+           i_src_port <= "00010";
            wait for 20 ns;
 
+
+           -- conexão SA=2
+
+           -- Packet length
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"04");
+
+           -- checksum
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"7F");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"DC");
+
+           -- seq_num
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"05");
+
+           -- clpr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"80"); -- flag
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+
+           -- src_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"02");
+
+           -- dest_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           
+           wait for 15 ns;
+           slave_i_last <= '1';
+           wait for 20 ns;
+           slave_i_last <= '0';
+           i_src_port <= "00001";
+           wait for 20 ns;
+
+
             -- new transmission
+            -- envio de SA=1 para DA=2
 
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"07");
@@ -174,9 +219,65 @@ begin
            slave_i_last <= '1';
            wait for 20 ns;
            slave_i_last <= '0';
+           i_src_port <= "00010";
            wait for 20 ns;
 
             -- new transmission
+            -- envio de SA=2 para DA=1
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"07");
+
+           -- checksum
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"10");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"86");
+
+           -- seq_num
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"06");
+
+           -- clpr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00"); -- flag
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+
+           -- src_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"02");
+
+           -- dest_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"01");
+
+           -- payload
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"21");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"64");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"72");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6F");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"57");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"20");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6F");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"65");
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"48");
+
+           wait for 15 ns;
+           slave_i_last <= '1';
+           wait for 20 ns;
+           slave_i_last <= '0';
+           i_src_port <= "00001";
+           wait for 20 ns;
+
+            -- new transmission
+            -- desconexão de SA=1
 
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"04");
@@ -206,7 +307,46 @@ begin
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
-           
+
+            wait for 15 ns;
+           slave_i_last <= '1';
+           wait for 20 ns;
+           slave_i_last <= '0';
+           i_src_port <= "00010";
+           wait for 20 ns;
+
+            -- new transmission
+            -- desconexão de SA=2
+
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"04");
+
+           -- checksum
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"FE");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"DA");
+
+           -- seq_num
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"07");
+
+           -- clpr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"01"); -- flag
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"18"); -- protocol
+
+           -- dummy
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+
+           -- src_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"02");
+
+           -- dest_addr
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+
            wait for 15 ns;
 
            slave_i_last <= '1';
