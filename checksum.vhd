@@ -22,10 +22,17 @@ signal check_value_reg, check_value_next : std_logic_vector(31 downto 0) := (oth
 signal check_error_reg, check_error_next : std_logic := '0';
 signal check_intermed_reg, check_intermed_next : std_logic_vector(7 downto 0) := (others=>'0');
 signal check_calc_reg, check_calc_next : std_logic_vector(31 downto 0) := (others=>'0');
+signal estado : std_logic_vector (2 downto 0);
 begin
 
+    estado <= "000" when state_reg = idle else
+              "001" when state_reg = msb else
+              "010" when state_reg = lsb else
+              "011" when state_reg = done_msb else
+              "100" when state_reg = done_lsb;
+
     -- atualização de estado
-    process(i_clk,i_last)
+    process(i_clk)
     begin
         if(i_valid = '0') then -- valid e ready atuam como enable síncrono
             state_reg          <= idle              ;
@@ -39,37 +46,54 @@ begin
             check_error_reg    <= check_error_next   ;
             check_intermed_reg <= check_intermed_next;
             check_calc_reg     <= check_calc_next    ;
-        elsif(i_last = '1' and state_reg = lsb) then
-            state_reg <= done_lsb;
-            check_value_reg    <= check_value_next   ;
-            check_error_reg    <= check_error_next   ;
-            check_intermed_reg <= check_intermed_next;
-            check_calc_reg    <= check_calc_next     ;
-        elsif(i_last = '1' and state_reg = msb) then
-            state_reg <= done_msb;
-            check_value_reg    <= check_value_next   ;
-            check_error_reg    <= check_error_next   ;
-            check_intermed_reg <= check_intermed_next;
-            check_calc_reg    <= check_calc_next     ;
-        elsif(falling_edge(i_last)) then
-            state_reg <= msb;
-            check_value_reg    <= (others => '0');
-            check_error_reg    <= '0';
-            check_intermed_reg <= (others => '0');
-            check_calc_reg     <= (others => '0');
+
         end if;
     end process;
 
+    
     -- lógica de próximo estado
-    state_next <= done_lsb  when i_last = '1' and state_reg = done_lsb                   else
-                  done_msb  when i_last = '1' and state_reg = done_msb                   else
-                  done_msb  when i_last = '1' and state_reg = idle and state_next = lsb  else
-                  done_lsb  when i_last = '1' and state_reg = idle and state_next = msb  else
-                  msb       when state_reg = lsb                                         else
-                  lsb       when state_reg = msb                                         else
-                  msb       when state_reg = done_lsb                                    else
-                  msb       when state_reg = done_msb;
-                  
+    process(state_reg,i_last)
+    begin
+        case state_reg is
+            when idle     =>
+                if   (i_last = '1' and state_next = lsb) then
+                    state_next <= done_msb;
+                elsif(i_last = '1' and state_next = msb) then
+                    state_next <= done_msb;
+                end if;
+
+            when done_lsb =>
+                if(i_last = '1') then
+                    state_next <= state_reg;
+                else
+                    state_next <= msb;
+                end if;
+
+            when done_msb =>
+                if(i_last = '1') then
+                    state_next <= state_reg;
+                else
+                    state_next <= msb;
+                end if;
+
+            when msb      =>
+                if(i_last = '1') then
+                    state_next <= done_msb;
+                else
+                    state_next <= lsb;
+                end if;
+
+            when lsb      =>
+                if(i_last = '1') then
+                    state_next <= done_lsb;
+                else
+                    state_next <= msb;
+                end if;
+
+            when others =>
+        end case;
+    end process;
+
     -- operações de estado
     process(state_reg,check_value_reg,check_intermed_reg,check_error_reg, i_data, i_received_checksum)
     begin
@@ -88,33 +112,51 @@ begin
             when done_msb =>
                 check_calc_next <= std_logic_vector(unsigned(check_value_reg)  + unsigned(check_intermed_reg) - unsigned(i_received_checksum));
                 check_value_next <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg));
+                if((unsigned(check_value_reg) > X"FFFF")) then
+                    check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16))) = X"0000FFFF") then
+                        check_error_next <= '0';
+                    else
+                        check_error_next <= '1';
+                    end if;
+                else
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0))) = X"0000FFFF") then
+                        check_error_next <= '0';
+                    else
+                        check_error_next <= '1';
+                    end if;
+                end if;
+
+                if((unsigned(check_calc_reg) > X"FFFF")) then
+                    check_calc_next <= not(std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16))));
+                else
+                    check_calc_next <= not(std_logic_vector(unsigned(check_calc_reg)));
+                end if;
+
+            when done_lsb =>
+                if((unsigned(check_value_reg) > X"FFFF")) then
+                    check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16))) = X"0000FFFF") then
+                        check_error_next <= '0';
+                    else
+                        check_error_next <= '1';
+                    end if;
+                else
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0))) = X"0000FFFF") then
+                        check_error_next <= '0';
+                    else
+                        check_error_next <= '1';
+                    end if;
+                end if;
+
+                if((unsigned(check_calc_reg) > X"FFFF")) then
+                    check_calc_next <= not(std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16))));
+                else
+                    check_calc_next <= not(std_logic_vector(unsigned(check_calc_reg)));
+                end if;
+
             when others =>
         end case;
-
-        if((state_reg = done_msb or state_reg = done_lsb)) then
-            if((unsigned(check_value_reg) > X"FFFF")) then
-                check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
-                if((unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16))) = X"0000FFFF") then
-                    check_error_next <= '0';
-                else
-                    check_error_next <= '1';
-                end if;
-            else
-                if((unsigned(X"0000" & check_value_reg(15 downto 0))) = X"0000FFFF") then
-                    check_error_next <= '0';
-                else
-                    check_error_next <= '1';
-                end if;
-            end if;
-
-            if((unsigned(check_calc_reg) > X"FFFF")) then
-                check_calc_next <= not(std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16))));
-            else
-                check_calc_next <= not(std_logic_vector(unsigned(check_calc_reg)));
-            end if;
-
-        end if;
-        
     end process;
 
     o_checksum_error <= check_error_next;
