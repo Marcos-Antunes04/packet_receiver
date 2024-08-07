@@ -1,0 +1,28 @@
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|7FE1|0000 0001|8018|0000|0001|0000| (Conexão SA=1)
+
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|7FDC|0000 0005|8018|0000|0002|0000| (Conexão SA=2)
+
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA | PY
+0007|ADEC|0000 0002|0018|0000|0001|0002|48656C6C6F20576F726C6421| (Envio de SA=1 para DA=2)
+
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA | PY
+0007|1086|0000 0006|0018|0000|0002|0001|21646C726F57206F6C6C6548| (Envio de SA=2 para DA=1)
+
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|FEDF|0000 0003|0118|0000|0001|0000| (Desconexão SA=1)
+
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|FEDA|0000 0007|0118|0000|0002|0000| (Desconexão SA=2)

@@ -125,6 +125,8 @@ begin
            wait for 10 ns;
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
            slave_i_last <= '0';
            i_src_port <= "00010";
            wait for 20 ns;
@@ -164,6 +166,8 @@ begin
            
            wait for 15 ns;
            slave_i_last <= '1';
+           wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
@@ -224,6 +228,8 @@ begin
            wait for 10 ns;
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
            slave_i_last <= '0';
            i_src_port <= "00010";
            wait for 20 ns;
@@ -280,6 +286,8 @@ begin
            wait for 10 ns;
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
            slave_i_last <= '0';
            i_src_port <= "00001";
            wait for 20 ns;
@@ -321,6 +329,8 @@ begin
            wait for 10 ns;
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
            slave_i_last <= '0';
            i_src_port <= "00010";
            wait for 20 ns;
@@ -357,9 +367,14 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
 
-           wait for 15 ns;
-
+           wait for 10 ns;
            slave_i_last <= '1';
+           wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
+           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           wait for 10 ns;
+
            wait for 10000 ns;
         end loop;
     end process;

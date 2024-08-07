@@ -1,0 +1,112 @@
+0004 		packet_len	(PL)
+xxxx 		checksum	(CS)
+0000 0001	seq num		(SN)
+1		SYN		(SY)
+0		CLO		(CL)
+18		Protocol	(PR)
+0000		Dummy		(DU)
+0001		Source Address	(SA)
+0000		Destination Addres (DA)
+
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|xxxx|0000 0001|8018|0000|0001|0000| (Conexão SA=1 SN=1)
+
+Cálculo checksum
+
+0004
+0000
+0001
+8018
+0000
+0001
+0000
+____+
+801E  > NOT > 7FE1
+
+Mensagem final
+	            SY		
+ PL | CS |   SN    |CLPR| DU | SA | DA |
+0004|7FE1|0000 0001|8018|0000|0001|0000|
+
+Verificando checksum
+
+0004
+7fe1
+0000
+0001
+8018
+0000
+0001
+0000
+____+
+FFFF  > NOT > 0000  (certo)
+
+______________________________________________________________________________________________________________
+
+0007 		packet_len	(PL)
+xxxx 		checksum	(CS)
+1234 5678 	seq num		(SN)
+0		SYN		(SY)
+0		CLO		(CL)
+18		Protocol	(PR)
+0000		Dummy		(DU)
+0001		Source Address	(SA)
+0002		Destination Addres (DA)
+4865 6c6c 6f20 576f 726c 6421   Payload(PY)
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA | PY
+0007|xxxx|1234 5678|0018|0000|0001|0002|48656C6C6F20576F726C6421| (Envio de SA=1 para DA=2 com SN= 1234 5678)
+
+Cálculo checksum
+ 3
+ 0007
+ 0000
+ 1234
+ 5678
+ 0018
+ 0000
+ 0001
+ 0002
+ 4865
+ 6C6C
+ 6F20
+ 576F
+ 726C
+ 6421
+ ____+
+2BCBB
+
+BCBB
+0002
+____+
+BCBD  > NOT > 4342
+
+Mensagem final
+	           |SY|		
+ PL | CS |   SN    |CLPR| DU | SA | DA | PY
+0007|4342|1234 5678|0018|0000|0001|0002|48656C6C6F20576F726C6421| (Envio de SA=1 para DA=2 com SN= 1234 5678)
+
+Verificando checksum
+
+ 0007
+ 4342
+ 1234
+ 5678
+ 0018
+ 0000
+ 0001
+ 0002
+ 4865
+ 6C6C
+ 6F20
+ 576F
+ 726C
+ 6421
+ ____+
+2FFFD
+
+FFFD
+0002
+____+
+FFFF  > NOT > 0000  (certo)
