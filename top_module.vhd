@@ -51,12 +51,14 @@ architecture behavioral of top_module is
     signal o_dest_addr         : std_logic_vector(15 downto 0);
     signal o_calc_checksum     : std_logic_vector(15 downto 0);
 
+    signal w_ready : std_logic := '1';
+
 
     component checksum
     port(
         -- input ports
         i_clk, i_valid, i_last : in std_logic;
-        o_ready : out std_logic;
+        i_ready : in std_logic;
         i_data : in std_logic_vector(7 downto 0);
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
@@ -121,7 +123,7 @@ begin
     module_checksum: checksum
     port map (
         i_clk               => slave_i_clk,
-        o_ready             => slave_o_ready,
+        i_ready             => w_ready,
         i_valid             => slave_i_valid,
         i_last              => slave_i_last,
         i_received_checksum => link_checksum,
@@ -175,5 +177,7 @@ begin
         close_error              => close_error,
         sync_close_error         => sync_close_error 
     );
+
+    slave_o_ready <= w_ready;
 
 end behavioral;
