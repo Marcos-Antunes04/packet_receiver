@@ -31,28 +31,27 @@ entity top_module is
 end top_module;
 
 architecture behavioral of top_module is
-    signal flags               : std_logic_vector(6 downto 0);
-    alias packet_length_error  : std_logic is flags(0);
-    alias checksum_error       : std_logic is flags(1);
-    alias seq_num_error        : std_logic is flags(2);
-    alias dest_addr_not_found  : std_logic is flags(3);
-    alias sync_error           : std_logic is flags(4);
-    alias close_error          : std_logic is flags(5);
-    alias sync_close_error     : std_logic is flags(6);
+    signal flags                      : std_logic_vector(6 downto 0);
+    alias packet_length_error         : std_logic is flags(0);
+    alias checksum_error              : std_logic is flags(1);
+    alias seq_num_error               : std_logic is flags(2);
+    alias dest_addr_not_found         : std_logic is flags(3);
+    alias sync_error                  : std_logic is flags(4);
+    alias close_error                 : std_logic is flags(5);
+    alias sync_close_error            : std_logic is flags(6);
 
     signal link_port_controller_clock : std_logic;
-    signal link_flag           : std_logic_vector(07 downto 0);
-    signal link_packet_length  : std_logic_vector(15 downto 0);
-    signal link_checksum       : std_logic_vector(15 downto 0);
-    signal link_src_addr       : std_logic_vector(15 downto 0);
-    signal link_seq_num        : std_logic_vector(31 downto 0);
-    signal link_dest_addr      : std_logic_vector(15 downto 0);
-    signal o_dest_port         : std_logic_vector(04 downto 0);
-    signal o_dest_addr         : std_logic_vector(15 downto 0);
-    signal o_calc_checksum     : std_logic_vector(15 downto 0);
-
-    signal w_ready : std_logic := '1';
-
+    signal link_flag                  : std_logic_vector(07 downto 0);
+    signal link_packet_length         : std_logic_vector(15 downto 0);
+    signal link_checksum              : std_logic_vector(15 downto 0);
+    signal link_src_addr              : std_logic_vector(15 downto 0);
+    signal link_seq_num               : std_logic_vector(31 downto 0);
+    signal link_dest_addr             : std_logic_vector(15 downto 0);
+    signal o_dest_port                : std_logic_vector(04 downto 0);
+    signal o_dest_addr                : std_logic_vector(15 downto 0);
+    signal o_calc_checksum            : std_logic_vector(15 downto 0);
+       
+    signal w_ready                    : std_logic := '1';
 
     component checksum
     port(
@@ -82,7 +81,7 @@ architecture behavioral of top_module is
     port(
         -- input ports
         i_clk, i_valid, i_last : in std_logic;
-        o_ready: out std_logic;
+        i_ready: in std_logic;
         i_data : in std_logic_vector(7 downto 0);
         -- output ports        
         o_packet_length : out std_logic_vector(15 downto 0) := (others => '0');
@@ -145,7 +144,7 @@ begin
     module_header_extractor: header_extractor
     port map (
         i_clk                   => slave_i_clk,
-        o_ready                 => slave_o_ready,
+        i_ready                 => w_ready,
         i_valid                 => slave_i_valid,
         i_last                  => slave_i_last,
         i_data                  => slave_i_data,

@@ -57,7 +57,21 @@ architecture behavior of tb_top_module is
         wait for 1 ns;
         clk <= '1';
         wait for 2 ns;
+        clk <= '0';
     end procedure clock_cycle_with_data;
+
+    procedure clock_cycle_with_last(signal clk : inout std_logic; signal last : inout std_logic) is
+    begin
+        clk <= '0';
+        last <= '1';
+        wait for 1 ns;
+        wait for 1 ns;
+        clk <= '1';
+        wait for 2 ns;
+        clk <= '0';
+        last <= '0';
+    end procedure clock_cycle_with_last;
+
 
 begin
     master_module: top_module
@@ -120,16 +134,20 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            
-           wait for 15 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           slave_i_last <= '0';
-           i_src_port <= "00010";
-           wait for 20 ns;
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last);
+           wait for 5 ns;
+
+           -- wait for 15 ns;
+           -- slave_i_last <= '1';
+           -- wait for 10 ns;
+           -- clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           -- wait for 10 ns;
+           -- clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           -- wait for 10 ns;
+           -- slave_i_last <= '0';
+           -- i_src_port <= "00010";
+           -- wait for 20 ns;
 
 
            -- conexão SA=2

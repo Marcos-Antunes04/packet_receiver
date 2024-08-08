@@ -17,7 +17,7 @@ entity checksum is
 end checksum;
 
 architecture behavioral of checksum is
-type state_type is (MSB, LSB, DONE_LSB, DONE_MSB, CHECK);
+type state_type is (MSB, LSB, DONE_LSB, DONE_MSB);
 signal r_STATE_REG         : state_type := MSB; -- por padrão o estado começa como most significant
 signal r_STATE_NEXT        : state_type;
 
@@ -49,6 +49,9 @@ begin
     -- lógica de próximo estado
     next_state: process(r_STATE_REG,i_valid, i_ready, i_last)
     begin
+        -- default value
+        r_STATE_NEXT <= r_STATE_REG;
+
         case(r_STATE_REG) is
             when MSB =>
                 if i_valid = '1' and i_ready = '1' then
@@ -57,8 +60,6 @@ begin
                     else
                         r_STATE_NEXT <= LSB;
                     end if;
-                else
-                    r_STATE_NEXT <= r_STATE_REG;
                 end if;
 
             when LSB =>
@@ -68,42 +69,26 @@ begin
                     else
                         r_STATE_NEXT <= MSB;
                     end if;
-                else
-                    r_STATE_NEXT <= r_STATE_REG;
                 end if;
 
             when DONE_MSB =>
-                if i_valid = '1' and i_ready = '1' then
-                    if(i_last = '1') then
-                        r_STATE_NEXT <= CHECK;
-                    else
-                        r_STATE_NEXT <= MSB;
-                    end if;
-                else
-                    r_STATE_NEXT <= r_STATE_REG;
-                end if;
-
-            when DONE_LSB =>
-                if i_valid = '1' and i_ready = '1' then
-                    if(i_last = '1') then
-                        r_STATE_NEXT <= CHECK;
-                    else
-                        r_STATE_NEXT <= MSB;
-                    end if;
-                else
-                    r_STATE_NEXT <= r_STATE_REG;
-                end if;
-
-            when CHECK =>
                 if i_valid = '1' and i_ready = '1' then
                     if(i_last = '1') then
                         r_STATE_NEXT <= r_STATE_REG;
                     else
                         r_STATE_NEXT <= MSB;
                     end if;
-                else
-                    r_STATE_NEXT <= r_STATE_REG;
                 end if;
+
+            when DONE_LSB =>
+                if i_valid = '1' and i_ready = '1' then
+                    if(i_last = '1') then
+                        r_STATE_NEXT <= r_STATE_REG;
+                    else
+                        r_STATE_NEXT <= MSB;
+                    end if;
+                end if;
+
             when others =>
         end case;
     end process;
@@ -131,29 +116,9 @@ begin
                 end if;
             
             when DONE_MSB =>
-            if i_valid = '1' and i_ready = '1' then
                 CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(CHECK_INTERMED_REG) - unsigned(i_received_checksum));
                 CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG));
-
-                if(i_last = '0') then
-                    CHECK_VALUE_NEXT    <= (others => '0');
-                    CHECK_ERROR_NEXT    <= '0';
-                    CHECK_INTERMED_NEXT <= (others => '0');
-                    CHECK_CALC_NEXT     <= (others => '0');
-                end if;               
-            end if;
-
-            when DONE_LSB =>
-            if i_valid = '1' and i_ready = '1' then
-                if(i_last = '0') then
-                    CHECK_VALUE_NEXT    <= (others => '0');
-                    CHECK_ERROR_NEXT    <= '0';
-                    CHECK_INTERMED_NEXT <= (others => '0');
-                    CHECK_CALC_NEXT     <= (others => '0');
-                end if;               
-            end if;
-
-            when CHECK =>
+                
                 if((unsigned(CHECK_VALUE_REG) > X"FFFF")) then
                     CHECK_VALUE_NEXT <= std_logic_vector(unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16)));
                     if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16))) = X"0000FFFF") then
@@ -174,13 +139,43 @@ begin
                 else
                     CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(CHECK_CALC_REG)));
                 end if;
-                
+
+                if(i_last = '0') then
+                    CHECK_VALUE_NEXT    <= (others => '0');
+                    CHECK_ERROR_NEXT    <= '0';
+                    CHECK_INTERMED_NEXT <= (others => '0');
+                    CHECK_CALC_NEXT     <= (others => '0');
+                end if;               
+
+            when DONE_LSB =>
+                if((unsigned(CHECK_VALUE_REG) > X"FFFF")) then
+                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16)));
+                    if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16))) = X"0000FFFF") then
+                        CHECK_ERROR_NEXT <= '0';
+                    else
+                        CHECK_ERROR_NEXT <= '1';
+                    end if;
+                else
+                    if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0))) = X"0000FFFF") then
+                        CHECK_ERROR_NEXT <= '0';
+                    else
+                        CHECK_ERROR_NEXT <= '1';
+                    end if;
+                end if;
+
+                if((unsigned(CHECK_CALC_REG) > X"FFFF")) then
+                    CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(X"0000" & CHECK_CALC_REG(15 downto 0)) + unsigned(X"0000" & CHECK_CALC_REG(31 downto 16))));
+                else
+                    CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(CHECK_CALC_REG)));
+                end if;
+
                 if(i_last = '0') then
                     CHECK_VALUE_NEXT    <= (others => '0');
                     CHECK_ERROR_NEXT    <= '0';
                     CHECK_INTERMED_NEXT <= (others => '0');
                     CHECK_CALC_NEXT     <= (others => '0');
                 end if;
+
             when others =>
         end case;
     end process;

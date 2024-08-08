@@ -5,9 +5,11 @@ use ieee.numeric_std.all;
 entity header_extractor is
     port(
         -- input ports
-        i_clk, i_valid, i_last : in std_logic;
-        o_ready: out std_logic;
-        i_data : in std_logic_vector(7 downto 0);
+        i_clk   : in std_logic;
+        i_valid : in std_logic;
+        i_last  : in std_logic;
+        i_ready : in std_logic;
+        i_data  : in std_logic_vector(7 downto 0);
         -- output ports        
         o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
         o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
@@ -20,161 +22,304 @@ entity header_extractor is
 end header_extractor;
 
 architecture behavioral of header_extractor is
-type state_type is (idle, packet_length_1, packet_length_2,checksum_1, checksum_2, seq_num_1, seq_num_2, seq_num_3, seq_num_4, flag, protocol, dummy_1, dummy_2, source_address_1, source_address_2, destination_address_1, destination_address_2, payload, finished); 
-signal state_reg  : state_type := packet_length_1;
-signal state_next : state_type;
-signal packet_length_reg, packet_length_next : std_logic_vector(15 downto 0) := (others => '0');
-signal seq_num_reg,seq_num_next              : std_logic_vector(31 downto 0) := (others => '0');
-signal src_addr_reg, src_addr_next           : std_logic_vector(15 downto 0) := (others => '0');
-signal dest_addr_reg, dest_addr_next         : std_logic_vector(15 downto 0) := (others => '0');
-signal checksum_reg, checksum_next           : std_logic_vector(15 downto 0) := (others => '0');
-signal flag_reg, flag_next                   : std_logic_vector(07 downto 0) := (others => '0');
-signal port_controller_clock_reg,port_controller_clock_next : std_logic := '0';
+type state_type is (PACKET_LENGTH_1, PACKET_LENGTH_2,CHECKSUM_1, CHECKSUM_2, SEQ_NUM_1, SEQ_NUM_2, SEQ_NUM_3, SEQ_NUM_4, FLAG, PROTOCOL, DUMMY_1, DUMMY_2, SOURCE_ADDRESS_1, SOURCE_ADDRESS_2, DESTINATION_ADDRESS_1, DESTINATION_ADDRESS_2, PAYLOAD, FINISHED); 
+signal r_STATE_REG                : state_type := PACKET_LENGTH_1; -- estado inicial setado como pl1
+signal r_STATE_NEXT               : state_type;
+        
+signal PACKET_LENGTH_REG          : std_logic_vector(15 downto 0) := (others => '0');
+signal PACKET_LENGTH_NEXT         : std_logic_vector(15 downto 0) := (others => '0');
+        
+signal SEQ_NUM_REG                : std_logic_vector(31 downto 0) := (others => '0');
+signal SEQ_NUM_NEXT               : std_logic_vector(31 downto 0) := (others => '0');
+        
+signal SRC_ADDR_REG               : std_logic_vector(15 downto 0) := (others => '0');
+signal SRC_ADDR_NEXT              : std_logic_vector(15 downto 0) := (others => '0');
+        
+signal DEST_ADDR_REG              : std_logic_vector(15 downto 0) := (others => '0');
+signal DEST_ADDR_NEXT             : std_logic_vector(15 downto 0) := (others => '0');
+        
+signal CHECKSUM_REG               : std_logic_vector(15 downto 0) := (others => '0');
+signal CHECKSUM_NEXT              : std_logic_vector(15 downto 0) := (others => '0');
+        
+signal FLAG_REG                   : std_logic_vector(07 downto 0) := (others => '0');
+signal FLAG_NEXT                  : std_logic_vector(07 downto 0) := (others => '0');
+
+signal PORT_CONTROLLER_CLOCK_REG  : std_logic := '0';
+signal PORT_CONTROLLER_CLOCK_NEXT : std_logic := '0';
+
+signal estado : std_logic_vector(4 downto 0);
 begin
 
+    estado <= "00000" when r_STATE_REG = PACKET_LENGTH_1 else
+              "00001" when r_STATE_REG = PACKET_LENGTH_2 else
+              "00010" when r_STATE_REG = CHECKSUM_1 else
+              "00011" when r_STATE_REG = CHECKSUM_2 else
+              "00100" when r_STATE_REG = SEQ_NUM_1 else
+              "00101" when r_STATE_REG = SEQ_NUM_2 else
+              "00110" when r_STATE_REG = SEQ_NUM_3 else
+              "00111" when r_STATE_REG = SEQ_NUM_4 else
+              "01000" when r_STATE_REG = FLAG else
+              "01001" when r_STATE_REG = PROTOCOL else
+              "01010" when r_STATE_REG = DUMMY_1 else
+              "01011" when r_STATE_REG = DUMMY_2 else
+              "01100" when r_STATE_REG = SOURCE_ADDRESS_1 else
+              "01101" when r_STATE_REG = SOURCE_ADDRESS_2 else
+              "01110" when r_STATE_REG = DESTINATION_ADDRESS_1 else
+              "01111" when r_STATE_REG = DESTINATION_ADDRESS_2 else
+              "10000" when r_STATE_REG = PAYLOAD else
+              "10001" when r_STATE_REG = FINISHED;
+
     -- atualização de estado
-    process(i_clk,i_last)
+    process(i_clk)
     begin
-        if(i_valid = '0') then -- sinais que funcionam como enable síncrono
-            state_reg <= idle;
-            packet_length_reg <= packet_length_reg;
-            seq_num_reg       <= seq_num_reg;
-            src_addr_reg      <= src_addr_reg;
-            dest_addr_reg     <= dest_addr_reg;
-            checksum_reg      <= checksum_reg;
-            flag_reg          <= flag_reg;
-            port_controller_clock_reg <= port_controller_clock_reg;
-        elsif(i_last = '1') then
-            state_reg <= finished;
-            packet_length_reg <= packet_length_next;
-            seq_num_reg       <= seq_num_next;
-            src_addr_reg      <= src_addr_next;
-            dest_addr_reg     <= dest_addr_next;
-            checksum_reg      <= checksum_next;
-            flag_reg          <= flag_next;
-            port_controller_clock_reg <= port_controller_clock_next;
-        elsif(rising_edge(i_clk)) then
-            state_reg         <= state_next;
-            packet_length_reg <= packet_length_next;
-            seq_num_reg       <= seq_num_next;
-            src_addr_reg      <= src_addr_next;
-            dest_addr_reg     <= dest_addr_next;
-            checksum_reg      <= checksum_next;
-            flag_reg          <= flag_next;
-            port_controller_clock_reg <= port_controller_clock_next;
-        elsif(falling_edge(i_last)) then
-            state_reg <= packet_length_1;
-            packet_length_reg <= (others => '0');
-            seq_num_reg       <= (others => '0');
-            src_addr_reg      <= (others => '0');
-            dest_addr_reg     <= (others => '0');
-            checksum_reg      <= (others => '0');
-            flag_reg          <= (others => '0');
-            port_controller_clock_reg <= '0';
+        if(rising_edge(i_clk)) then
+            r_STATE_REG               <= r_STATE_NEXT;
+            PACKET_LENGTH_REG         <= PACKET_LENGTH_NEXT;
+            SEQ_NUM_REG               <= SEQ_NUM_NEXT;
+            SRC_ADDR_REG              <= SRC_ADDR_NEXT;
+            DEST_ADDR_REG             <= DEST_ADDR_NEXT;
+            CHECKSUM_REG              <= CHECKSUM_NEXT;
+            FLAG_REG                  <= FLAG_NEXT;
+            PORT_CONTROLLER_CLOCK_REG <= PORT_CONTROLLER_CLOCK_NEXT;
         end if;
     end process;
 
     -- lógica de próximo estado
-    state_next <= packet_length_2       when state_reg = packet_length_1       else
-                  checksum_1            when state_reg = packet_length_2       else
-                  checksum_2            when state_reg = checksum_1            else 
-                  seq_num_1             when state_reg = checksum_2            else
-                  seq_num_2             when state_reg = seq_num_1             else
-                  seq_num_3             when state_reg = seq_num_2             else
-                  seq_num_4             when state_reg = seq_num_3             else
-                  flag                  when state_reg = seq_num_4             else
-                  protocol              when state_reg = flag                  else
-                  dummy_1               when state_reg = protocol              else
-                  dummy_2               when state_reg = dummy_1               else
-                  source_address_1      when state_reg = dummy_2               else
-                  source_address_2      when state_reg = source_address_1      else
-                  destination_address_1 when state_reg = source_address_2      else
-                  destination_address_2 when state_reg = destination_address_1 else
-                  payload               when state_reg = destination_address_2 else
-                  payload               when state_reg = payload;
+    process(r_STATE_REG, i_valid, i_ready, i_last)
+    begin
+        --default value
+        r_STATE_NEXT <= r_STATE_REG;
 
-    -- operações de estado
-    process(state_reg, packet_length_reg,checksum_reg,seq_num_reg,src_addr_reg,dest_addr_reg, flag_reg, i_data)
+        case(r_STATE_REG) is
+            when PACKET_LENGTH_1     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= PACKET_LENGTH_2;
+                    end if;
+                end if;
+            when PACKET_LENGTH_2     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= CHECKSUM_1;
+                    end if;
+                end if;
+            when CHECKSUM_1     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= CHECKSUM_2;
+                    end if;
+                end if;
+            when CHECKSUM_2     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SEQ_NUM_1;
+                    end if;
+                end if;
+            when SEQ_NUM_1     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SEQ_NUM_2;
+                    end if;
+                end if;
+            when SEQ_NUM_2     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SEQ_NUM_3;
+                    end if;
+                end if;
+            when SEQ_NUM_3     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SEQ_NUM_4;
+                    end if;
+                end if;
+            when SEQ_NUM_4     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= FLAG;
+                    end if;
+                end if;
+            when FLAG     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= PROTOCOL;
+                    end if;
+                end if;
+            when PROTOCOL =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= DUMMY_1;
+                    end if;
+                end if;
+            when DUMMY_1  =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= DUMMY_2;
+                    end if;
+                end if;
+            when DUMMY_2  =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SOURCE_ADDRESS_1;
+                    end if;
+                end if;
+            when SOURCE_ADDRESS_1     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= SOURCE_ADDRESS_2;
+                    end if;
+                end if;
+            when SOURCE_ADDRESS_2     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= DESTINATION_ADDRESS_1;
+                    end if;
+                end if;
+            when DESTINATION_ADDRESS_1     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= DESTINATION_ADDRESS_2;
+                    end if;
+                end if;
+            when DESTINATION_ADDRESS_2     =>
+                if (i_valid = '1' and i_ready = '1') then
+                    if (i_last = '1') then 
+                        r_STATE_NEXT <= FINISHED;
+                    else
+                        r_STATE_NEXT <= PAYLOAD;
+                    end if;
+                end if;
+            when PAYLOAD  =>
+                if (i_valid = '1' and i_ready = '1' and i_last = '1') then
+                    r_STATE_NEXT <= FINISHED;
+                end if;
+            when FINISHED =>
+                if (i_valid = '1' and i_ready = '1' and i_last = '0') then
+                    r_STATE_NEXT <= PACKET_LENGTH_1;
+                end if;
+        end case;
+    end process;
+
+    -- datapath
+    process(r_STATE_REG, PACKET_LENGTH_REG,CHECKSUM_REG,SEQ_NUM_REG,SRC_ADDR_REG,DEST_ADDR_REG, FLAG_REG, i_data)
     begin
         -- dafault values
-        packet_length_next         <= packet_length_reg;
-        checksum_next              <= checksum_reg;
-        seq_num_next               <= seq_num_reg;
-        src_addr_next              <= src_addr_reg;
-        dest_addr_next             <= dest_addr_reg;
-        flag_next                  <= flag_reg;
-        port_controller_clock_next <= port_controller_clock_reg;
+        PACKET_LENGTH_NEXT         <= PACKET_LENGTH_REG;
+        CHECKSUM_NEXT              <= CHECKSUM_REG;
+        SEQ_NUM_NEXT               <= SEQ_NUM_REG;
+        SRC_ADDR_NEXT              <= SRC_ADDR_REG;
+        DEST_ADDR_NEXT             <= DEST_ADDR_REG;
+        FLAG_NEXT                  <= FLAG_REG;
+        PORT_CONTROLLER_CLOCK_NEXT <= PORT_CONTROLLER_CLOCK_REG;
 
-        case(state_reg) is
+        case(r_STATE_REG) is
             -- packet length
-            when packet_length_1     =>
-                port_controller_clock_next <= '0';
-                packet_length_next(15 downto 8) <= i_data;
-            when packet_length_2     =>
-                packet_length_next(7 downto 0)  <= i_data;
+            when PACKET_LENGTH_1     =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                PACKET_LENGTH_NEXT(15 downto 8) <= i_data;
+            when PACKET_LENGTH_2     =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                PACKET_LENGTH_NEXT(7 downto 0)  <= i_data;
 
             -- checksum
-            when checksum_1     =>
-                o_packet_length <= packet_length_reg;
-                checksum_next(15 downto 8) <= i_data;
-            when checksum_2     =>
-                checksum_next(7 downto 0)  <= i_data;
+            when CHECKSUM_1     =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                o_packet_length <= PACKET_LENGTH_REG;
+                CHECKSUM_NEXT(15 downto 8) <= i_data;
+            when CHECKSUM_2     =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                CHECKSUM_NEXT(7 downto 0)  <= i_data;
 
             -- sequence number
-            when seq_num_1     =>
-                o_checksum <= checksum_reg;
-                seq_num_next(31 downto 24) <= i_data;
-            when seq_num_2     =>
-                seq_num_next(23 downto 16) <= i_data;
-            when seq_num_3     =>
-                seq_num_next(15 downto 8)  <= i_data;
-            when seq_num_4     =>
-                seq_num_next(7 downto 0)   <= i_data;
+            when SEQ_NUM_1     =>
+                o_checksum <= CHECKSUM_REG;
+                SEQ_NUM_NEXT(31 downto 24) <= i_data;
+            when SEQ_NUM_2     =>
+                SEQ_NUM_NEXT(23 downto 16) <= i_data;
+            when SEQ_NUM_3     =>
+                SEQ_NUM_NEXT(15 downto 8)  <= i_data;
+            when SEQ_NUM_4     =>
+                SEQ_NUM_NEXT(7 downto 0)   <= i_data;
 
-            -- flag
-            when flag     =>
-                o_seq_num <= seq_num_reg;
-                port_controller_clock_next <= '1';
-                flag_next <= i_data;
+            -- FLAG
+            when FLAG     =>
+                o_seq_num <= SEQ_NUM_REG;
+                PORT_CONTROLLER_CLOCK_NEXT <= '1';
+                FLAG_NEXT <= i_data;
 
-            when protocol =>
-                port_controller_clock_next <= '0';
-                o_flag <= flag_reg;
-            when dummy_1  =>
-                port_controller_clock_next <= '1';
-            when dummy_2  =>
-                port_controller_clock_next <= '0';
+            when PROTOCOL =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                o_flag <= FLAG_REG;
+            when DUMMY_1  =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '1';
+            when DUMMY_2  =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
 
             -- source address
-            when source_address_1     =>
-                src_addr_next(15 downto 8) <= i_data;
-            when source_address_2     =>
-                src_addr_next(7 downto 0)  <= i_data;
+            when SOURCE_ADDRESS_1     =>
+                SRC_ADDR_NEXT(15 downto 8) <= i_data;
+            when SOURCE_ADDRESS_2     =>
+                SRC_ADDR_NEXT(7 downto 0)  <= i_data;
 
             -- destination address
-            when destination_address_1     =>
-                o_src_addr <= src_addr_reg;
-                port_controller_clock_next <= '1';
-                dest_addr_next(15 downto 8) <= i_data;
-            when destination_address_2     =>
-                port_controller_clock_next <= '0';
-                dest_addr_next(7 downto 0)  <= i_data;
+            when DESTINATION_ADDRESS_1     =>
+                o_src_addr <= SRC_ADDR_REG;
+                PORT_CONTROLLER_CLOCK_NEXT <= '1';
+                DEST_ADDR_NEXT(15 downto 8) <= i_data;
+            when DESTINATION_ADDRESS_2     =>
+                PORT_CONTROLLER_CLOCK_NEXT <= '0';
+                DEST_ADDR_NEXT(7 downto 0)  <= i_data;
 
-            -- payload
-            when payload  =>
-                o_dest_addr <= dest_addr_reg;
-                port_controller_clock_next <= '1';
+            -- PAYLOAD
+            when PAYLOAD  =>
+                o_dest_addr <= DEST_ADDR_REG;
+                PORT_CONTROLLER_CLOCK_NEXT <= '1';
             
-            -- finished state
-            when finished =>
-                o_dest_addr <= dest_addr_reg;
-                port_controller_clock_next <= '1';
+            -- FINISHED state
+            when FINISHED =>
+                o_dest_addr <= DEST_ADDR_REG;
+                PORT_CONTROLLER_CLOCK_NEXT <= '1';
+                PACKET_LENGTH_NEXT(15 downto 8) <= i_data;
+                SEQ_NUM_NEXT                    <= (others => '0');
+                SRC_ADDR_NEXT                   <= (others => '0');
+                DEST_ADDR_NEXT                  <= (others => '0');
+                CHECKSUM_NEXT                   <= (others => '0');
+                FLAG_NEXT                       <= (others => '0');
 
-            -- eventually idle
             when others =>
         end case;
 
     end process;
 
-    o_port_controller_clock <= port_controller_clock_reg;
+    o_port_controller_clock <= PORT_CONTROLLER_CLOCK_REG;
 end behavioral;
