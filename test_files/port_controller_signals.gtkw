@@ -1,0 +1,36 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Fri Aug  9 19:55:31 2024
+[*]
+[dumpfile] "/home/marcos/my_repo/top_module.vcd"
+[dumpfile_mtime] "Fri Aug  9 19:54:26 2024"
+[dumpfile_size] 173586
+[savefile] "/home/marcos/my_repo/test_files/port_controller_signals.gtkw"
+[timestart] 0
+[size] 1908 987
+[pos] -266 -149
+*-25.000000 92400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_top_module.
+[treeopen] tb_top_module.master_module.
+[sst_width] 214
+[signals_width] 230
+[sst_expanded] 1
+[sst_vpaned_height] 275
+@28
+tb_top_module.master_module.module_header_extractor.i_clk
+@22
+tb_top_module.master_module.module_header_extractor.i_data[7:0]
+@28
+tb_top_module.master_module.module_header_extractor.i_last
+tb_top_module.master_module.module_port_controller.i_port_clock_controller
+@22
+tb_top_module.master_module.module_port_controller.i_seq_num[31:0]
+tb_top_module.master_module.module_port_controller.seq_num_next[31:0]
+tb_top_module.master_module.module_port_controller.flag_next[7:0]
+tb_top_module.master_module.module_port_controller.src_addr_next[15:0]
+tb_top_module.master_module.module_port_controller.dest_addr_next[15:0]
+tb_top_module.master_module.module_port_controller.dest_port_next[4:0]
+@25
+tb_top_module.master_module.module_port_controller.estado[2:0]
+[pattern_trace] 1
+[pattern_trace] 0

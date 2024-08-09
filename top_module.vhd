@@ -98,7 +98,7 @@ architecture behavioral of top_module is
     port(
         -- input ports
         i_valid, i_last         : in std_logic;
-        o_ready                 : out std_logic;
+        i_ready                 : in std_logic;
         i_src_port              : in std_logic_vector(4 downto 0);
         i_port_clock_controller : in std_logic;
         i_flag                  : in std_logic_vector(07 downto 0) := (others => '0');
@@ -160,7 +160,7 @@ begin
     module_port_controller: port_controller
     port map (
         i_port_clock_controller  => link_port_controller_clock,
-        o_ready                  => slave_o_ready,
+        i_ready                  => w_ready,
         i_valid                  => slave_i_valid,
         i_last                   => slave_i_last,
         i_flag                   => link_flag, 

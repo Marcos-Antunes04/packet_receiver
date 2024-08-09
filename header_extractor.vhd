@@ -46,29 +46,7 @@ signal FLAG_NEXT                  : std_logic_vector(07 downto 0) := (others => 
 
 signal PORT_CONTROLLER_CLOCK_REG  : std_logic := '0';
 signal PORT_CONTROLLER_CLOCK_NEXT : std_logic := '0';
-
-signal estado : std_logic_vector(4 downto 0);
 begin
-
-    estado <= "00000" when r_STATE_REG = PACKET_LENGTH_1 else
-              "00001" when r_STATE_REG = PACKET_LENGTH_2 else
-              "00010" when r_STATE_REG = CHECKSUM_1 else
-              "00011" when r_STATE_REG = CHECKSUM_2 else
-              "00100" when r_STATE_REG = SEQ_NUM_1 else
-              "00101" when r_STATE_REG = SEQ_NUM_2 else
-              "00110" when r_STATE_REG = SEQ_NUM_3 else
-              "00111" when r_STATE_REG = SEQ_NUM_4 else
-              "01000" when r_STATE_REG = FLAG else
-              "01001" when r_STATE_REG = PROTOCOL else
-              "01010" when r_STATE_REG = DUMMY_1 else
-              "01011" when r_STATE_REG = DUMMY_2 else
-              "01100" when r_STATE_REG = SOURCE_ADDRESS_1 else
-              "01101" when r_STATE_REG = SOURCE_ADDRESS_2 else
-              "01110" when r_STATE_REG = DESTINATION_ADDRESS_1 else
-              "01111" when r_STATE_REG = DESTINATION_ADDRESS_2 else
-              "10000" when r_STATE_REG = PAYLOAD else
-              "10001" when r_STATE_REG = FINISHED;
-
     -- atualização de estado
     process(i_clk)
     begin
@@ -256,6 +234,10 @@ begin
                 PORT_CONTROLLER_CLOCK_NEXT <= '0';
                 o_packet_length <= PACKET_LENGTH_REG;
                 CHECKSUM_NEXT(15 downto 8) <= i_data;
+
+                
+                CHECKSUM_NEXT <= CHECKSUM_NEXT(7 downto 0) & i_data;
+
             when CHECKSUM_2     =>
                 PORT_CONTROLLER_CLOCK_NEXT <= '0';
                 CHECKSUM_NEXT(7 downto 0)  <= i_data;
