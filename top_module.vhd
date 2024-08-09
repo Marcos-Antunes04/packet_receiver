@@ -70,8 +70,8 @@ architecture behavioral of top_module is
     port(
         -- input ports
         i_clk, i_valid, i_last : in std_logic;
-        o_ready : out std_logic;
-        received_packet_length : in std_logic_vector(15 downto 0);
+        i_ready : in std_logic;
+        i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
         o_packet_length_error : out std_logic
     );
@@ -133,12 +133,12 @@ begin
 
     module_packet_length: packet_length
     port map (
-        i_clk                  => slave_i_clk,
-        o_ready                => slave_o_ready,
-        i_valid                => slave_i_valid,
-        i_last                 => slave_i_last,
-        received_packet_length => link_packet_length,
-        o_packet_length_error  => packet_length_error 
+        i_clk                    => slave_i_clk,
+        i_ready                  => w_ready,
+        i_valid                  => slave_i_valid,
+        i_last                   => slave_i_last,
+        i_received_packet_length => link_packet_length,
+        o_packet_length_error    => packet_length_error 
     );
 
     module_header_extractor: header_extractor
