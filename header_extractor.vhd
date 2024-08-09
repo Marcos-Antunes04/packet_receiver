@@ -225,7 +225,7 @@ begin
                 end if;
             when FINISHED =>
                 if (i_valid = '1' and i_ready = '1' and i_last = '0') then
-                    r_STATE_NEXT <= PACKET_LENGTH_1;
+                    r_STATE_NEXT <= PACKET_LENGTH_2;
                 end if;
         end case;
     end process;

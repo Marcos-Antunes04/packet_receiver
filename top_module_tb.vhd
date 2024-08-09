@@ -60,8 +60,9 @@ architecture behavior of tb_top_module is
         clk <= '0';
     end procedure clock_cycle_with_data;
 
-    procedure clock_cycle_with_last(signal clk : inout std_logic; signal last : inout std_logic) is
+    procedure clock_cycle_with_last(signal clk : inout std_logic; signal last : inout std_logic; signal data : inout std_logic_vector) is
     begin
+        data <= (others => '0');
         clk <= '0';
         last <= '1';
         wait for 1 ns;
@@ -135,20 +136,9 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last);
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
+           i_src_port <= "00010";
            wait for 5 ns;
-
-           -- wait for 15 ns;
-           -- slave_i_last <= '1';
-           -- wait for 10 ns;
-           -- clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           -- wait for 10 ns;
-           -- clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           -- wait for 10 ns;
-           -- slave_i_last <= '0';
-           -- i_src_port <= "00010";
-           -- wait for 20 ns;
-
 
            -- conexão SA=2
 
@@ -182,17 +172,10 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
            
-           wait for 15 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           slave_i_last <= '0';
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            i_src_port <= "00001";
-           wait for 20 ns;
-
+           wait for 15 ns;
 
             -- new transmission
             -- envio de SA=1 para DA=2
@@ -241,16 +224,11 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"64");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"21");
 
-           wait for 15 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           slave_i_last <= '0';
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
+           wait for 5 ns;
            i_src_port <= "00010";
-           wait for 20 ns;
+           wait for 15 ns;
 
             -- new transmission
             -- envio de SA=2 para DA=1
@@ -299,16 +277,11 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"65");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"48");
 
-           wait for 15 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           slave_i_last <= '0';
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
+           wait for 5 ns;
            i_src_port <= "00001";
-           wait for 20 ns;
+           wait for 15 ns;
 
             -- new transmission
             -- desconexão de SA=1
@@ -342,16 +315,11 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
 
-            wait for 15 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           slave_i_last <= '0';
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
+           wait for 5 ns;
            i_src_port <= "00010";
-           wait for 20 ns;
+           wait for 15 ns;
 
             -- new transmission
             -- desconexão de SA=2
@@ -385,13 +353,10 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
 
-           wait for 10 ns;
-           slave_i_last <= '1';
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           wait for 10 ns;
+           wait for 5 ns;
+           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
+           wait for 5 ns;
+           wait for 15 ns;
 
            wait for 10000 ns;
         end loop;

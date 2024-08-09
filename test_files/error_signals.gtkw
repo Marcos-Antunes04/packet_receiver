@@ -1,0 +1,38 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Fri Aug  9 17:45:51 2024
+[*]
+[dumpfile] "/home/marcos/my_repo/top_module.vcd"
+[dumpfile_mtime] "Fri Aug  9 17:39:47 2024"
+[dumpfile_size] 193621
+[savefile] "/home/marcos/my_repo/test_files/error_signals.gtkw"
+[timestart] 0
+[size] 1268 951
+[pos] -1551 -57
+*-28.000000 149600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_top_module.
+[treeopen] tb_top_module.master_module.
+[sst_width] 214
+[signals_width] 230
+[sst_expanded] 1
+[sst_vpaned_height] 275
+@28
+tb_top_module.master_module.module_header_extractor.i_clk
+@22
+tb_top_module.master_module.module_header_extractor.i_data[7:0]
+@28
+tb_top_module.master_module.module_header_extractor.i_last
+@22
+tb_top_module.master_module.module_checksum.i_received_checksum[15:0]
+tb_top_module.master_module.module_checksum.o_calc_checksum[15:0]
+@28
+tb_top_module.master_module.module_checksum.o_checksum_error
+tb_top_module.master_module.module_packet_length.o_packet_length_error
+tb_top_module.master_module.module_port_controller.sync_error
+tb_top_module.master_module.module_port_controller.sync_close_error
+tb_top_module.master_module.module_port_controller.close_error
+tb_top_module.master_module.module_port_controller.seq_num_error
+@29
+tb_top_module.master_module.module_port_controller.dest_addr_error
+[pattern_trace] 1
+[pattern_trace] 0
