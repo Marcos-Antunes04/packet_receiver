@@ -4,9 +4,9 @@ use ieee.numeric_std.all;
 entity port_controller is
     port(
         -- input ports
-        i_valid                 : in std_logic;
-        i_last                  : in std_logic;
-        i_ready                 : in std_logic;
+        S_AXIS_T_VALID          : in std_logic;
+        S_AXIS_T_LAST           : in std_logic;
+        S_AXIS_T_READY          : in std_logic;
         i_src_port              : in std_logic_vector(4 downto 0);
         i_port_clock_controller : in std_logic;
         i_flag                  : in std_logic_vector(07 downto 0) := (others => '0');
@@ -88,37 +88,37 @@ begin
         end if;
     end process;
 
-    process(r_STATE_REG, i_last, i_ready, i_valid)
+    process(r_STATE_REG, S_AXIS_T_LAST, S_AXIS_T_READY, S_AXIS_T_VALID)
     begin
         -- default value
         r_STATE_NEXT <= r_STATE_REG;
         case r_STATE_REG is
             when START =>
-                if(i_last = '1') then
+                if(S_AXIS_T_LAST = '1') then
                     r_STATE_NEXT <= DEST_ADDR_CAPTURE;
-                elsif(i_ready = '1' and i_valid = '1') then
+                elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     r_STATE_NEXT <= SEQ_NUM_CAPTURE;
                 end if;
             when SEQ_NUM_CAPTURE   =>
-                if(i_last = '1') then
+                if(S_AXIS_T_LAST = '1') then
                     r_STATE_NEXT <= FLAG_CAPTURE;
-                elsif(i_ready = '1' and i_valid = '1') then
+                elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     r_STATE_NEXT <= FLAG_CAPTURE;
                 end if;
             when FLAG_CAPTURE =>
-                if(i_last = '1') then
+                if(S_AXIS_T_LAST = '1') then
                     r_STATE_NEXT <= SRC_ADDR_CAPTURE;
-                elsif(i_ready = '1' and i_valid = '1') then
+                elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     r_STATE_NEXT <= SRC_ADDR_CAPTURE;
                 end if;
             when SRC_ADDR_CAPTURE  =>
-                if(i_last = '1') then
+                if(S_AXIS_T_LAST = '1') then
                     r_STATE_NEXT <= DEST_ADDR_CAPTURE;
-                elsif(i_ready = '1' and i_valid = '1') then
+                elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     r_STATE_NEXT <= DEST_ADDR_CAPTURE;
                 end if;
             when DEST_ADDR_CAPTURE =>
-                if(i_last = '1') then
+                if(S_AXIS_T_LAST = '1') then
                     r_STATE_NEXT <= r_STATE_REG;
                 else
                     r_STATE_NEXT <= SEQ_NUM_CAPTURE;

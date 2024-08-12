@@ -5,9 +5,11 @@ use ieee.numeric_std.all;
 entity top_module is
     port(
         -- slave interface ports
-        slave_i_clk, slave_i_valid, slave_i_last : in std_logic;
-        slave_o_ready : out std_logic;
-        slave_i_data : in std_logic_vector(7 downto 0);
+        slave_i_clk : in std_logic;
+        S_AXIS_T_VALID : in std_logic;
+        S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_READY : out std_logic;
+        S_AXIS_T_DATA : in std_logic_vector(7 downto 0);
         i_src_port : in std_logic_vector(4 downto 0);
 
         -- master interface ports
@@ -56,9 +58,9 @@ architecture behavioral of top_module is
     component checksum
     port(
         -- input ports
-        i_clk, i_valid, i_last : in std_logic;
-        i_ready : in std_logic;
-        i_data : in std_logic_vector(7 downto 0);
+        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_READY : in std_logic;
+        S_AXIS_T_DATA : in std_logic_vector(7 downto 0);
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum : out std_logic_vector(15 downto 0);        
@@ -69,8 +71,8 @@ architecture behavioral of top_module is
     component packet_length
     port(
         -- input ports
-        i_clk, i_valid, i_last : in std_logic;
-        i_ready : in std_logic;
+        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_READY : in std_logic;
         i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
         o_packet_length_error : out std_logic
@@ -80,16 +82,16 @@ architecture behavioral of top_module is
     component header_extractor
     port(
         -- input ports
-        i_clk, i_valid, i_last : in std_logic;
-        i_ready: in std_logic;
-        i_data : in std_logic_vector(7 downto 0);
-        -- output ports        
-        o_packet_length : out std_logic_vector(15 downto 0) := (others => '0');
-        o_flag          : out std_logic_vector(07 downto 0) := (others => '0');
-        o_seq_num       : out std_logic_vector(31 downto 0) := (others => '0');
-        o_src_addr      : out std_logic_vector(15 downto 0) := (others => '0');
-        o_dest_addr     : out std_logic_vector(15 downto 0) := (others => '0');
-        o_checksum      : out std_logic_vector(15 downto 0) := (others => '0');
+        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_READY          : in std_logic;
+        S_AXIS_T_DATA           : in std_logic_vector(7 downto 0);
+        -- output ports                
+        o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
+        o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
+        o_seq_num               : out std_logic_vector(31 downto 0) := (others => '0');
+        o_src_addr              : out std_logic_vector(15 downto 0) := (others => '0');
+        o_dest_addr             : out std_logic_vector(15 downto 0) := (others => '0');
+        o_checksum              : out std_logic_vector(15 downto 0) := (others => '0');
         o_port_controller_clock : out std_logic := '0'
     );
     end component;
@@ -97,14 +99,14 @@ architecture behavioral of top_module is
     component port_controller
     port(
         -- input ports
-        i_valid, i_last         : in std_logic;
-        i_ready                 : in std_logic;
-        i_src_port              : in std_logic_vector(4 downto 0);
-        i_port_clock_controller : in std_logic;
-        i_flag                  : in std_logic_vector(07 downto 0) := (others => '0');
-        i_seq_num               : in std_logic_vector(31 downto 0) := (others => '0');
-        i_src_addr              : in std_logic_vector(15 downto 0) := (others => '0');
-        i_dest_addr             : in std_logic_vector(15 downto 0) := (others => '0');
+        S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_READY                : in std_logic;
+        i_src_port                    : in std_logic_vector(4 downto 0);
+        i_port_clock_controller       : in std_logic;
+        i_flag                        : in std_logic_vector(07 downto 0) := (others => '0');
+        i_seq_num                     : in std_logic_vector(31 downto 0) := (others => '0');
+        i_src_addr                    : in std_logic_vector(15 downto 0) := (others => '0');
+        i_dest_addr                   : in std_logic_vector(15 downto 0) := (others => '0');
 
         -- output ports
         o_dest_port      : out std_logic_vector(04 downto 0) := (others => '0');
@@ -122,11 +124,11 @@ begin
     module_checksum: checksum
     port map (
         i_clk               => slave_i_clk,
-        i_ready             => w_ready,
-        i_valid             => slave_i_valid,
-        i_last              => slave_i_last,
+        S_AXIS_T_READY      => w_ready,
+        S_AXIS_T_VALID      => S_AXIS_T_VALID,
+        S_AXIS_T_LAST       => S_AXIS_T_LAST,
         i_received_checksum => link_checksum,
-        i_data              => slave_i_data,
+        S_AXIS_T_DATA       => S_AXIS_T_DATA,
         o_calc_checksum     => o_calc_checksum,
         o_checksum_error    => checksum_error 
     );
@@ -134,9 +136,9 @@ begin
     module_packet_length: packet_length
     port map (
         i_clk                    => slave_i_clk,
-        i_ready                  => w_ready,
-        i_valid                  => slave_i_valid,
-        i_last                   => slave_i_last,
+        S_AXIS_T_READY           => w_ready,
+        S_AXIS_T_VALID           => S_AXIS_T_VALID,
+        S_AXIS_T_LAST            => S_AXIS_T_LAST,
         i_received_packet_length => link_packet_length,
         o_packet_length_error    => packet_length_error 
     );
@@ -144,10 +146,10 @@ begin
     module_header_extractor: header_extractor
     port map (
         i_clk                   => slave_i_clk,
-        i_ready                 => w_ready,
-        i_valid                 => slave_i_valid,
-        i_last                  => slave_i_last,
-        i_data                  => slave_i_data,
+        S_AXIS_T_READY          => w_ready,
+        S_AXIS_T_VALID          => S_AXIS_T_VALID,
+        S_AXIS_T_LAST           => S_AXIS_T_LAST,
+        S_AXIS_T_DATA           => S_AXIS_T_DATA,
         o_flag                  => link_flag, 
         o_packet_length         => link_packet_length,
         o_seq_num               => link_seq_num, 
@@ -160,9 +162,9 @@ begin
     module_port_controller: port_controller
     port map (
         i_port_clock_controller  => link_port_controller_clock,
-        i_ready                  => w_ready,
-        i_valid                  => slave_i_valid,
-        i_last                   => slave_i_last,
+        S_AXIS_T_READY                  => w_ready,
+        S_AXIS_T_VALID                  => S_AXIS_T_VALID,
+        S_AXIS_T_LAST                   => S_AXIS_T_LAST,
         i_flag                   => link_flag, 
         i_seq_num                => link_seq_num, 
         i_src_addr               => link_src_addr, 
@@ -177,6 +179,6 @@ begin
         sync_close_error         => sync_close_error 
     );
 
-    slave_o_ready <= w_ready;
+    S_AXIS_T_READY <= w_ready;
 
 end behavioral;

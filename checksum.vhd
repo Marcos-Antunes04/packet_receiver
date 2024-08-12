@@ -5,10 +5,10 @@ entity checksum is
     port(
         -- input ports
         i_clk               : in std_logic;
-        i_valid             : in std_logic;
-        i_last              : in std_logic;
-        i_ready             : in std_logic;
-        i_data              : in std_logic_vector(7 downto 0);
+        S_AXIS_T_VALID      : in std_logic;
+        S_AXIS_T_LAST       : in std_logic;
+        S_AXIS_T_READY      : in std_logic;
+        S_AXIS_T_DATA       : in std_logic_vector(7 downto 0);
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum     : out std_logic_vector(15 downto 0);        
@@ -51,7 +51,7 @@ begin
     end process;
 
     -- lógica de próximo estado
-    next_state: process(r_STATE_REG, CTRL_REG, i_valid, i_ready, i_last)
+    next_state: process(r_STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
     begin
         -- default value
         r_STATE_NEXT <= r_STATE_REG;
@@ -59,15 +59,15 @@ begin
 
         case(r_STATE_REG) is
             when EXEC =>
-                if i_valid = '1' and i_ready = '1' then
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' then
                     CTRL_NEXT <= not CTRL_REG;
-                    if(i_last = '1') then
+                    if(S_AXIS_T_LAST = '1') then
                         r_STATE_NEXT <= FINISHED;
                     end if;
                 end if;
 
             when FINISHED =>
-                if i_valid = '1' and i_ready = '1'then
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1'then
                         r_STATE_NEXT <= EXEC;
                         CTRL_NEXT <= '1';
                 end if;
@@ -78,7 +78,7 @@ begin
 
 
     
-    datapath: process(r_STATE_REG,CHECK_VALUE_REG,CHECK_INTERMED_REG, CHECK_CALC_REG, CHECK_ERROR_REG, CTRL_REG, i_data, i_received_checksum, i_last)
+    datapath: process(r_STATE_REG,CHECK_VALUE_REG,CHECK_INTERMED_REG, CHECK_CALC_REG, CHECK_ERROR_REG, CTRL_REG, S_AXIS_T_DATA, i_received_checksum, S_AXIS_T_LAST)
     begin
         -- default values
         CHECK_ERROR_NEXT    <= CHECK_ERROR_REG;
@@ -88,17 +88,17 @@ begin
 
         case(r_STATE_REG) is
             when EXEC =>
-                if i_valid = '1' and i_ready = '1' and CTRL_REG = '0' then
-                    CHECK_INTERMED_NEXT <= i_data;
-                    if(i_last = '1') then
-                        CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(i_data) - unsigned(i_received_checksum));
-                        CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(i_data));
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and CTRL_REG = '0' then
+                    CHECK_INTERMED_NEXT <= S_AXIS_T_DATA;
+                    if(S_AXIS_T_LAST = '1') then
+                        CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(S_AXIS_T_DATA) - unsigned(i_received_checksum));
+                        CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(S_AXIS_T_DATA));
                     end if;
                 end if;
 
-                if i_valid = '1' and i_ready = '1' and CTRL_REG = '1' then
-                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & i_data));
-                    CHECK_CALC_NEXT  <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & i_data) - unsigned(i_received_checksum));
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and CTRL_REG = '1' then
+                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & S_AXIS_T_DATA));
+                    CHECK_CALC_NEXT  <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & S_AXIS_T_DATA) - unsigned(i_received_checksum));
                 end if;
             
             when FINISHED =>
@@ -123,7 +123,7 @@ begin
                     CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(CHECK_CALC_REG)));
                 end if;
 
-                if(i_last = '0') then
+                if(S_AXIS_T_LAST = '0') then
                     CHECK_VALUE_NEXT    <= (others => '0');
                     CHECK_ERROR_NEXT    <= '0';
                     CHECK_INTERMED_NEXT <= (others => '0');
