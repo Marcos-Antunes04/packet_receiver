@@ -57,41 +57,19 @@ begin
         r_STATE_NEXT <= r_STATE_REG;
         CTRL_NEXT    <= CTRL_REG;
 
-
         case(r_STATE_REG) is
             when EXEC =>
-                if i_valid = '1' and i_ready = '1' and CTRL_REG = '0' then
+                if i_valid = '1' and i_ready = '1' then
+                    CTRL_NEXT <= not CTRL_REG;
                     if(i_last = '1') then
                         r_STATE_NEXT <= FINISHED;
-                    else
-                        CTRL_NEXT <= '1';
-                    end if;
-                end if;
-
-                if i_valid = '1' and i_ready = '1' AND CTRL_REG = '1' then
-                    if(i_last = '1') then
-                        r_STATE_NEXT <= FINISHED;
-                    else
-                        CTRL_NEXT <= '0';
                     end if;
                 end if;
 
             when FINISHED =>
-                if i_valid = '1' and i_ready = '1' and CTRL_REG = '0' then
-                    if(i_last = '1') then
-                        r_STATE_NEXT <= r_STATE_REG;
-                    else
+                if i_valid = '1' and i_ready = '1'then
                         r_STATE_NEXT <= EXEC;
-                    end if;
-                end if;
-
-                if i_valid = '1' and i_ready = '1' and CTRL_REG = '1' then
-                    if(i_last = '1') then
-                        r_STATE_NEXT <= r_STATE_REG;
-                    else
-                        r_STATE_NEXT <= EXEC;
-                        CTRL_NEXT <= '0';
-                    end if;
+                        CTRL_NEXT <= '1';
                 end if;
 
             when others =>
@@ -112,6 +90,10 @@ begin
             when EXEC =>
                 if i_valid = '1' and i_ready = '1' and CTRL_REG = '0' then
                     CHECK_INTERMED_NEXT <= i_data;
+                    if(i_last = '1') then
+                        CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(i_data) - unsigned(i_received_checksum));
+                        CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(i_data));
+                    end if;
                 end if;
 
                 if i_valid = '1' and i_ready = '1' and CTRL_REG = '1' then
@@ -120,11 +102,6 @@ begin
                 end if;
             
             when FINISHED =>
-                if(CTRL_REG = '0') then
-                    CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(CHECK_INTERMED_REG) - unsigned(i_received_checksum));
-                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG));
-                end if;
-
                 if((unsigned(CHECK_VALUE_REG) > X"FFFF")) then
                     CHECK_VALUE_NEXT <= std_logic_vector(unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16)));
                     if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16))) = X"0000FFFF") then

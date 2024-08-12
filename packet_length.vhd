@@ -4,13 +4,13 @@ use ieee.numeric_std.all;
 entity packet_length is
     port(
         -- input ports
-        i_clk                  : in std_logic;
-        i_valid                : in std_logic;
-        i_last                 : in std_logic;
-        i_ready                : in std_logic;
+        i_clk                    : in std_logic;
+        i_valid                  : in std_logic;
+        i_last                   : in std_logic;
+        i_ready                  : in std_logic;
         i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
-        o_packet_length_error  : out std_logic
+        o_packet_length_error    : out std_logic
     );
 end packet_length;
 
@@ -65,7 +65,7 @@ begin
                     COUNTER_NEXT <= std_logic_vector(unsigned(COUNTER_REG) + 1);
                 end if;
             when FINISHED =>
-                if (unsigned(COUNTER_REG) = unsigned(4 * unsigned(i_received_packet_length))) then
+                if (unsigned(COUNTER_REG) = unsigned(4 * unsigned(i_received_packet_length)) - 1) then
                     PACKET_LENGTH_ERROR_NEXT <= '0';
                 else
                     PACKET_LENGTH_ERROR_NEXT <= '1';

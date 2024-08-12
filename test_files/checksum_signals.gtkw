@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Mon Aug 12 18:16:42 2024
+[*] Mon Aug 12 19:39:04 2024
 [*]
 [dumpfile] "/home/marcos/my_repo/top_module.vcd"
-[dumpfile_mtime] "Mon Aug 12 18:15:21 2024"
-[dumpfile_size] 185035
+[dumpfile_mtime] "Mon Aug 12 19:33:03 2024"
+[dumpfile_size] 184780
 [savefile] "/home/marcos/my_repo/test_files/checksum_signals.gtkw"
 [timestart] 0
 [size] 1908 987
-[pos] -802 -105
-*-25.000000 69600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -524 -76
+*-27.000000 61500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_top_module.
 [treeopen] tb_top_module.master_module.
 [sst_width] 214
@@ -17,14 +17,18 @@
 [sst_expanded] 1
 [sst_vpaned_height] 275
 @28
-tb_top_module.master_module.module_header_extractor.i_clk
+tb_top_module.master_module.module_checksum.i_clk
 @22
-tb_top_module.master_module.module_header_extractor.i_data[7:0]
+tb_top_module.master_module.module_checksum.i_data[7:0]
 @28
-tb_top_module.master_module.module_header_extractor.i_last
+tb_top_module.master_module.module_checksum.i_last
 @22
+tb_top_module.master_module.module_checksum.check_calc_next[31:0]
 tb_top_module.master_module.module_checksum.check_value_next[31:0]
-@23
 tb_top_module.master_module.module_checksum.o_calc_checksum[15:0]
+@28
+tb_top_module.master_module.module_checksum.o_checksum_error
+@23
+tb_top_module.master_module.module_checksum.i_received_checksum[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

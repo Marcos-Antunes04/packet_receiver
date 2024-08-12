@@ -6,20 +6,22 @@ entity tb_top_module is
 end tb_top_module;
 
 architecture behavior of tb_top_module is
-        signal slave_i_clk, slave_i_valid, slave_i_last : std_logic := '0';
-        signal slave_o_ready : std_logic := '0';
-        signal slave_i_data : std_logic_vector(7 downto 0) := (others => '0');
-        signal i_src_port : std_logic_vector(4 downto 0) := (others => '0');
-        signal o_dest_port_valid : std_logic := '0';
-        signal i_dest_port_ready :  std_logic := '0';
-        signal o_dest_addr_valid :  std_logic := '0';
-        signal i_dest_addr_ready :  std_logic := '0';
+        signal slave_i_clk           : std_logic := '0';
+        signal slave_i_valid         : std_logic := '0';
+        signal slave_i_last          : std_logic := '0';
+        signal slave_o_ready         : std_logic := '0';
+        signal slave_i_data          : std_logic_vector(7 downto 0) := (others => '0');
+        signal i_src_port            : std_logic_vector(4 downto 0) := (others => '0');
+        signal o_dest_port_valid     : std_logic := '0';
+        signal i_dest_port_ready     : std_logic := '0';
+        signal o_dest_addr_valid     : std_logic := '0';
+        signal i_dest_addr_ready     : std_logic := '0';
         signal o_calc_checksum_valid : std_logic := '0';
-        signal i_calc_checksum_ready :  std_logic := '0';
-        signal o_flags_valid : std_logic := '0';
-        signal i_flags_ready :  std_logic := '0';
-        signal master_o_clock : std_logic := '0';
-        signal master_o_data : std_logic_vector(7 downto 0) := (others => '0');
+        signal i_calc_checksum_ready : std_logic := '0';
+        signal o_flags_valid         : std_logic := '0';
+        signal i_flags_ready         : std_logic := '0';
+        signal master_o_clock        : std_logic := '0';
+        signal master_o_data         : std_logic_vector(7 downto 0) := (others => '0');
 
     component top_module
     port(
@@ -60,18 +62,18 @@ architecture behavior of tb_top_module is
         clk <= '0';
     end procedure clock_cycle_with_data;
 
-    procedure clock_cycle_with_last(signal clk : inout std_logic; signal last : inout std_logic; signal data : inout std_logic_vector) is
+    procedure clock_cycle_with_last_data(signal clk : inout std_logic; signal last : inout std_logic; signal data : inout std_logic_vector;  value : std_logic_vector) is
     begin
-        data <= (others => '0');
         clk <= '0';
         last <= '1';
         wait for 1 ns;
+        data <= value;
         wait for 1 ns;
         clk <= '1';
         wait for 2 ns;
         clk <= '0';
         last <= '0';
-    end procedure clock_cycle_with_last;
+    end procedure clock_cycle_with_last_data;
 
 
 begin
@@ -133,10 +135,9 @@ begin
 
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data , X"00");
            
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            i_src_port <= "00010";
            wait for 5 ns;
 
@@ -170,10 +171,9 @@ begin
 
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"00");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data , X"00");
            
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            i_src_port <= "00001";
            wait for 15 ns;
 
@@ -222,10 +222,9 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"72");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"64");
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"21");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data , X"21");
 
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            wait for 5 ns;
            i_src_port <= "00010";
            wait for 15 ns;
@@ -275,10 +274,9 @@ begin
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"6C");
            clock_cycle_with_data(slave_i_clk, slave_i_data , X"65");
-           clock_cycle_with_data(slave_i_clk, slave_i_data , X"48");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data , X"48");
 
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            wait for 5 ns;
            i_src_port <= "00001";
            wait for 15 ns;
@@ -313,10 +311,9 @@ begin
 
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
-           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data, X"00");
 
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            wait for 5 ns;
            i_src_port <= "00010";
            wait for 15 ns;
@@ -351,10 +348,9 @@ begin
 
            -- dest_addr
            clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
-           clock_cycle_with_data(slave_i_clk, slave_i_data, X"00");
+           clock_cycle_with_last_data(slave_i_clk, slave_i_last, slave_i_data, X"00");
 
            wait for 5 ns;
-           clock_cycle_with_last(slave_i_clk,slave_i_last, slave_i_data);
            wait for 5 ns;
            wait for 15 ns;
 
@@ -366,7 +362,6 @@ begin
     begin
         slave_o_ready <= '1';
         slave_i_valid <= '1';
-        -- i_last <= '0';
         wait for 1 ns;
 
         slave_o_ready <= '0';
