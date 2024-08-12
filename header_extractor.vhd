@@ -236,7 +236,7 @@ begin
                 CHECKSUM_NEXT(15 downto 8) <= i_data;
 
                 
-                CHECKSUM_NEXT <= CHECKSUM_NEXT(7 downto 0) & i_data;
+                --CHECKSUM_NEXT <= CHECKSUM_NEXT(7 downto 0) & i_data;
 
             when CHECKSUM_2     =>
                 PORT_CONTROLLER_CLOCK_NEXT <= '0';
