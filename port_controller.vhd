@@ -20,7 +20,8 @@ entity port_controller is
         dest_addr_error         : out std_logic := '0';
         sync_error              : out std_logic := '0';
         close_error             : out std_logic := '0';
-        sync_close_error        : out std_logic := '0'
+        sync_close_error        : out std_logic := '0';
+        o_expected_seq_num      : out std_logic_vector(31 downto 0) := (others => '0')
     );
 end port_controller;
 
@@ -29,20 +30,23 @@ type state_type is (START, SEQ_NUM_CAPTURE, FLAG_CAPTURE, SRC_ADDR_CAPTURE, DEST
 signal r_STATE_REG  : state_type := START; -- por padrão, o estado começa como START
 signal r_STATE_NEXT : state_type;
 
-signal OPEN_PORTS_REG  : std_logic_vector(4 downto 0)   := (others => '1');
-signal OPEN_PORTS_NEXT : std_logic_vector(4 downto 0)   := (others => '1'); -- por padrão, todas as portas são inicializadas livres
-
-signal SRC_ADDR_REG    : std_logic_vector(15 downto 0)  := (others => '0');
-signal SRC_ADDR_NEXT   : std_logic_vector(15 downto 0)  := (others => '0');
-
-signal DEST_ADDR_REG   : std_logic_vector(15 downto 0)  := (others => '0');
-signal DEST_ADDR_NEXT  : std_logic_vector(15 downto 0)  := (others => '0');
-
-signal DEST_PORT_REG   : std_logic_vector(4 downto 0)   := (others => '0');
-signal DEST_PORT_NEXT  : std_logic_vector(4 downto 0)   := (others => '0');
-
-signal SEQ_NUM_REG     : std_logic_vector(31 downto 0)  := (others => '0');
-signal SEQ_NUM_NEXT    : std_logic_vector(31 downto 0)  := (others => '0');
+signal OPEN_PORTS_REG         : std_logic_vector(4 downto 0)   := (others => '1');
+signal OPEN_PORTS_NEXT        : std_logic_vector(4 downto 0)   := (others => '1'); -- por padrão, todas as portas são inicializadas livres
+     
+signal SRC_ADDR_REG           : std_logic_vector(15 downto 0)  := (others => '0');
+signal SRC_ADDR_NEXT          : std_logic_vector(15 downto 0)  := (others => '0');
+     
+signal DEST_ADDR_REG          : std_logic_vector(15 downto 0)  := (others => '0');
+signal DEST_ADDR_NEXT         : std_logic_vector(15 downto 0)  := (others => '0');
+     
+signal DEST_PORT_REG          : std_logic_vector(4 downto 0)   := (others => '0');
+signal DEST_PORT_NEXT         : std_logic_vector(4 downto 0)   := (others => '0');
+     
+signal SEQ_NUM_REG            : std_logic_vector(31 downto 0)  := (others => '0');
+signal SEQ_NUM_NEXT           : std_logic_vector(31 downto 0)  := (others => '0');
+ 
+signal EXPECTED_SEQ_NUM_REG   : std_logic_vector(31 downto 0)  := (others => '0');
+signal EXPECTED_SEQ_NUM_NEXT  : std_logic_vector(31 downto 0)  := (others => '0');
 
 signal FLAG_REG        : std_logic_vector(7 downto 0)   := (others => '0');
 signal FLAG_NEXT       : std_logic_vector(7 downto 0)   := (others => '0');
@@ -57,34 +61,27 @@ signal SYNC_CLOSE_ERROR_REG, sync_CLOSE_ERROR_NEXT : std_logic := '0';
 signal SYNC_ERROR_REG, SYNC_ERROR_NEXT : std_logic := '0';
 signal CLOSE_ERROR_REG, CLOSE_ERROR_NEXT : std_logic := '0';
 signal DEST_ADDR_ERROR_REG, DEST_ADDR_ERROR_NEXT : std_logic := '0';
-
-signal estado : std_logic_vector(2 downto 0);
 begin
-
-    estado <= "000" when r_STATE_REG = START else
-              "001" when r_STATE_REG = SEQ_NUM_CAPTURE else
-              "010" when r_STATE_REG = FLAG_CAPTURE else
-              "011" when r_STATE_REG = SRC_ADDR_CAPTURE else
-              "100" when r_STATE_REG = DEST_ADDR_CAPTURE;
 
     -- processo de atualização de estados
     process(i_port_clock_controller)
     begin
         if(rising_edge(i_port_clock_controller)) then
-            r_STATE_REG          <= r_STATE_NEXT;
-            SEQ_NUM_ERROR_REG    <= SEQ_NUM_ERROR_NEXT;
-            OPEN_PORTS_REG       <= OPEN_PORTS_NEXT;
-            FLAG_REG             <= FLAG_NEXT;
-            SRC_ADDR_REG         <= SRC_ADDR_NEXT;
-            DEST_ADDR_REG        <= DEST_ADDR_NEXT;
-            SEQ_NUM_REG          <= SEQ_NUM_NEXT;
-            DEST_PORT_REG        <= DEST_PORT_NEXT;
-            r_SRC_ADDR_REG       <= r_SRC_ADDR_NEXT;
-            r_SEQ_NUM_REG        <= r_SEQ_NUM_NEXT;
-            SEQ_NUM_ERROR_REG    <= SEQ_NUM_ERROR_NEXT;
-            SYNC_CLOSE_ERROR_REG <= sync_CLOSE_ERROR_NEXT;
-            SYNC_ERROR_REG       <= SYNC_ERROR_NEXT;
-            SYNC_CLOSE_ERROR_REG <= sync_CLOSE_ERROR_NEXT;
+            r_STATE_REG           <= r_STATE_NEXT;
+            SEQ_NUM_ERROR_REG     <= SEQ_NUM_ERROR_NEXT;
+            OPEN_PORTS_REG        <= OPEN_PORTS_NEXT;
+            FLAG_REG              <= FLAG_NEXT;
+            SRC_ADDR_REG          <= SRC_ADDR_NEXT;
+            DEST_ADDR_REG         <= DEST_ADDR_NEXT;
+            SEQ_NUM_REG           <= SEQ_NUM_NEXT;
+            DEST_PORT_REG         <= DEST_PORT_NEXT;
+            r_SRC_ADDR_REG        <= r_SRC_ADDR_NEXT;
+            r_SEQ_NUM_REG         <= r_SEQ_NUM_NEXT;
+            SEQ_NUM_ERROR_REG     <= SEQ_NUM_ERROR_NEXT;
+            SYNC_CLOSE_ERROR_REG  <= sync_CLOSE_ERROR_NEXT;
+            SYNC_ERROR_REG        <= SYNC_ERROR_NEXT;
+            SYNC_CLOSE_ERROR_REG  <= sync_CLOSE_ERROR_NEXT;
+            EXPECTED_SEQ_NUM_REG  <= EXPECTED_SEQ_NUM_NEXT;
         end if;
     end process;
 
@@ -128,7 +125,7 @@ begin
     end process;
                   
     -- operações de estado
-    process(r_STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG)
+    process(r_STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG, EXPECTED_SEQ_NUM_REG)
     begin
         OPEN_PORTS_NEXT       <= OPEN_PORTS_REG;
         FLAG_NEXT             <= FLAG_REG;
@@ -143,18 +140,20 @@ begin
         SYNC_ERROR_NEXT       <= SYNC_ERROR_REG;
         CLOSE_ERROR_NEXT      <= CLOSE_ERROR_REG;
         DEST_ADDR_ERROR_NEXT  <= DEST_ADDR_ERROR_REG;
+        EXPECTED_SEQ_NUM_NEXT <= EXPECTED_SEQ_NUM_REG;
 
         case r_STATE_REG is
             -- início do pacote
             when START =>
-                DEST_PORT_NEXT        <= (others => '0');
-                DEST_ADDR_NEXT        <= (others => '0');
-                SEQ_NUM_NEXT          <= (others => '0');
-                SEQ_NUM_ERROR_NEXT    <= '0';
-                SYNC_ERROR_NEXT       <= '0';
-                CLOSE_ERROR_NEXT      <= '0';
-                sync_CLOSE_ERROR_NEXT <= '0';
-                DEST_ADDR_ERROR_NEXT  <= '0';
+                DEST_PORT_NEXT         <= (others => '0');
+                DEST_ADDR_NEXT         <= (others => '0');
+                SEQ_NUM_NEXT           <= (others => '0');
+                EXPECTED_SEQ_NUM_NEXT  <= (others => '0');
+                SEQ_NUM_ERROR_NEXT     <= '0';
+                SYNC_ERROR_NEXT        <= '0';
+                CLOSE_ERROR_NEXT       <= '0';
+                sync_CLOSE_ERROR_NEXT  <= '0';
+                DEST_ADDR_ERROR_NEXT   <= '0';
 
             -- captura do sequence number
             when SEQ_NUM_CAPTURE   =>
@@ -213,26 +212,31 @@ begin
                             r_SEQ_NUM_NEXT(31 downto 00) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(31 downto 00)) + 1))) then
                                 SEQ_NUM_ERROR_NEXT <= '1';
+                                EXPECTED_SEQ_NUM_NEXT <= std_logic_vector(unsigned(unsigned(r_SEQ_NUM_REG(31 downto 00)) + 1));
                             end if;
                         when "00010" => 
                             r_SEQ_NUM_NEXT(63 downto 32) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(63 downto 32)) + 1))) then
                                 SEQ_NUM_ERROR_NEXT <= '1';
+                                EXPECTED_SEQ_NUM_NEXT <= std_logic_vector(unsigned(unsigned(r_SEQ_NUM_REG(63 downto 32)) + 1));
                             end if;
                         when "00100" => 
                             r_SEQ_NUM_NEXT(95 downto 64) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(95 downto 64)) + 1))) then
                                 SEQ_NUM_ERROR_NEXT <= '1';
+                                EXPECTED_SEQ_NUM_NEXT <= std_logic_vector(unsigned(unsigned(r_SEQ_NUM_REG(95 downto 64)) + 1));
                             end if;
                         when "01000" => 
                             r_SEQ_NUM_NEXT(127 downto 96) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(127 downto 96)) + 1))) then
                                 SEQ_NUM_ERROR_NEXT <= '1';
+                                EXPECTED_SEQ_NUM_NEXT <= std_logic_vector(unsigned(unsigned(r_SEQ_NUM_REG(127 downto 96)) + 1));
                             end if;
                         when "10000" => 
                             r_SEQ_NUM_NEXT(159 downto 128) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(159 downto 128)) + 1))) then
                                 SEQ_NUM_ERROR_NEXT <= '1';
+                                EXPECTED_SEQ_NUM_NEXT <= std_logic_vector(unsigned(unsigned(r_SEQ_NUM_REG(159 downto 128)) + 1));
                             end if;
                         when others =>
                             SEQ_NUM_ERROR_NEXT <= '0';
@@ -270,12 +274,6 @@ begin
                 end if;
 
                 if(i_port_clock_controller = '0') then
-                    -- FLAG_NEXT             <= (others => '0');
-                    -- SRC_ADDR_NEXT         <= (others => '0');
-                    -- DEST_ADDR_NEXT        <= (others => '0');
-                    -- SEQ_NUM_NEXT          <= (others => '0');
-                    -- r_SRC_ADDR_NEXT       <= r_SRC_ADDR_NEXT;
-                    -- r_SEQ_NUM_NEXT        <= r_SEQ_NUM_NEXT;
                     SEQ_NUM_ERROR_NEXT    <= '0';
                     SYNC_CLOSE_ERROR_NEXT <= '0';
                     SYNC_ERROR_NEXT       <= '0';
@@ -300,4 +298,6 @@ begin
     sync_error <= SYNC_ERROR_NEXT;
 
     dest_addr_error <= DEST_ADDR_ERROR_NEXT;
+
+    o_expected_seq_num <= EXPECTED_SEQ_NUM_NEXT;
 end behavioral;

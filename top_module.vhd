@@ -14,21 +14,26 @@ entity top_module is
 
         -- master interface ports
 
-        -- controle da transmissão de dest_port
-        o_dest_port_valid : out std_logic;
-        i_dest_port_ready : in  std_logic;
-        -- controle da transmissão de dest_addr
-        o_dest_addr_valid : out std_logic;
-        i_dest_addr_ready : in  std_logic;
-        -- controle da transmissão de checksum
+        -- controle da transmissão de checksum esperado
         o_calc_checksum_valid : out std_logic;
         i_calc_checksum_ready : in  std_logic;
-        -- controle da transmissão de flags
-        o_flags_valid : out std_logic;
-        i_flags_ready : in  std_logic;
+
+        -- controle da transmissão de seq_num esperado
+        o_seq_num_expected_valid : out std_logic;
+        i_seq_num_expected_ready : in  std_logic;
+
+        -- controle da transmissão de payload_length esperado
+        o_payload_length_expected_valid : out std_logic;
+        i_payload_length_expected_ready : in  std_logic;
         
-        master_o_clock : out std_logic;
-        master_o_data : out std_logic_vector(7 downto 0)
+        master_i_ready : in  std_logic;
+        master_o_valid : out std_logic;
+        master_o_last  : out std_logic;
+        master_o_data  : out std_logic_vector(7 downto 0);
+        master_o_flags : out std_logic_vector(6 downto 0);
+
+        master_o_dest_port : out std_logic_vector(04 downto 0);
+        master_o_dest_addr : out std_logic_vector(15 downto 0)
     );
 end top_module;
 
@@ -42,18 +47,19 @@ architecture behavioral of top_module is
     alias close_error                 : std_logic is flags(5);
     alias sync_close_error            : std_logic is flags(6);
 
-    signal link_port_controller_clock : std_logic;
-    signal link_flag                  : std_logic_vector(07 downto 0);
-    signal link_packet_length         : std_logic_vector(15 downto 0);
-    signal link_checksum              : std_logic_vector(15 downto 0);
-    signal link_src_addr              : std_logic_vector(15 downto 0);
-    signal link_seq_num               : std_logic_vector(31 downto 0);
-    signal link_dest_addr             : std_logic_vector(15 downto 0);
+    signal w_port_controller_clock    : std_logic;
+    signal w_flag                     : std_logic_vector(07 downto 0);
+    signal w_packet_length            : std_logic_vector(15 downto 0);
+    signal w_checksum                 : std_logic_vector(15 downto 0);
+    signal w_src_addr                 : std_logic_vector(15 downto 0);
+    signal w_seq_num                  : std_logic_vector(31 downto 0);
+    signal w_dest_addr                : std_logic_vector(15 downto 0);
+    signal w_ready                    : std_logic := '1';
     signal o_dest_port                : std_logic_vector(04 downto 0);
     signal o_dest_addr                : std_logic_vector(15 downto 0);
     signal o_calc_checksum            : std_logic_vector(15 downto 0);
-       
-    signal w_ready                    : std_logic := '1';
+    signal w_calc_packet_lenght       : std_logic_vector(15 downto 0);
+    signal w_expected_seq_num         : std_logic_vector(31 downto 0);
 
     component checksum
     port(
@@ -75,7 +81,8 @@ architecture behavioral of top_module is
         S_AXIS_T_READY : in std_logic;
         i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
-        o_packet_length_error : out std_logic
+        o_packet_length_error : out std_logic;
+        o_calc_packet_length : out std_logic_vector(15 downto 0)
     );
     end component;
 
@@ -109,13 +116,40 @@ architecture behavioral of top_module is
         i_dest_addr                   : in std_logic_vector(15 downto 0) := (others => '0');
 
         -- output ports
-        o_dest_port      : out std_logic_vector(04 downto 0) := (others => '0');
-        o_dest_addr      : out std_logic_vector(15 downto 0) := (others => '0');
-        seq_num_error    : out std_logic := '0';
-        dest_addr_error  : out std_logic := '0';
-        sync_error       : out std_logic := '0';
-        close_error      : out std_logic := '0';
-        sync_close_error : out std_logic := '0'
+        o_dest_port                   : out std_logic_vector(04 downto 0) := (others => '0');
+        o_dest_addr                   : out std_logic_vector(15 downto 0) := (others => '0');
+        seq_num_error                 : out std_logic := '0';
+        dest_addr_error               : out std_logic := '0';
+        sync_error                    : out std_logic := '0';
+        close_error                   : out std_logic := '0';
+        sync_close_error              : out std_logic := '0';
+        o_expected_seq_num            : out std_logic_vector(31 downto 0)
+    );
+    end component;
+
+    component output_controller
+    port(
+        slave_i_clk                     : in std_logic;
+        S_AXIS_T_LAST                   : in std_logic;
+        i_flag                          : in std_logic_vector(06 downto 0);
+        i_calc_checksum                 : in std_logic_vector(15 downto 0); -- 2 clock cycles
+        i_dest_addr                     : in std_logic_vector(15 downto 0); -- 2 clock cycles
+        i_seq_num_expected              : in std_logic_vector(31 downto 0); -- 4 clock cycles
+        i_packet_length_expected        : in std_logic_vector(15 downto 0); -- 2 clock cycles
+        i_dest_port                     : in std_logic_vector(04 downto 0);
+        o_calc_checksum_valid           : out std_logic;
+        i_calc_checksum_ready           : in  std_logic;
+        o_seq_num_expected_valid        : out std_logic;
+        i_seq_num_expected_ready        : in  std_logic;
+        o_payload_length_expected_valid : out std_logic;
+        i_payload_length_expected_ready : in  std_logic;
+        master_i_ready                  : in  std_logic;
+        master_o_valid                  : out std_logic;
+        master_o_last                   : out std_logic;
+        master_o_data                   : out std_logic_vector(07 downto 0);
+        master_o_dest_port              : out std_logic_vector(04 downto 0);
+        master_o_dest_addr              : out std_logic_vector(15 downto 0);
+        master_o_flags                  : out std_logic_vector(06 downto 0)
     );
     end component;
 
@@ -127,7 +161,7 @@ begin
         S_AXIS_T_READY      => w_ready,
         S_AXIS_T_VALID      => S_AXIS_T_VALID,
         S_AXIS_T_LAST       => S_AXIS_T_LAST,
-        i_received_checksum => link_checksum,
+        i_received_checksum => w_checksum,
         S_AXIS_T_DATA       => S_AXIS_T_DATA,
         o_calc_checksum     => o_calc_checksum,
         o_checksum_error    => checksum_error 
@@ -139,8 +173,9 @@ begin
         S_AXIS_T_READY           => w_ready,
         S_AXIS_T_VALID           => S_AXIS_T_VALID,
         S_AXIS_T_LAST            => S_AXIS_T_LAST,
-        i_received_packet_length => link_packet_length,
-        o_packet_length_error    => packet_length_error 
+        i_received_packet_length => w_packet_length,
+        o_packet_length_error    => packet_length_error,
+        o_calc_packet_length     => w_calc_packet_lenght
     );
 
     module_header_extractor: header_extractor
@@ -150,25 +185,25 @@ begin
         S_AXIS_T_VALID          => S_AXIS_T_VALID,
         S_AXIS_T_LAST           => S_AXIS_T_LAST,
         S_AXIS_T_DATA           => S_AXIS_T_DATA,
-        o_flag                  => link_flag, 
-        o_packet_length         => link_packet_length,
-        o_seq_num               => link_seq_num, 
-        o_src_addr              => link_src_addr, 
-        o_dest_addr             => link_dest_addr, 
-        o_checksum              => link_checksum,
-        o_port_controller_clock => link_port_controller_clock 
+        o_flag                  => w_flag, 
+        o_packet_length         => w_packet_length,
+        o_seq_num               => w_seq_num, 
+        o_src_addr              => w_src_addr, 
+        o_dest_addr             => w_dest_addr, 
+        o_checksum              => w_checksum,
+        o_port_controller_clock => w_port_controller_clock 
     );
 
     module_port_controller: port_controller
     port map (
-        i_port_clock_controller  => link_port_controller_clock,
-        S_AXIS_T_READY                  => w_ready,
-        S_AXIS_T_VALID                  => S_AXIS_T_VALID,
-        S_AXIS_T_LAST                   => S_AXIS_T_LAST,
-        i_flag                   => link_flag, 
-        i_seq_num                => link_seq_num, 
-        i_src_addr               => link_src_addr, 
-        i_dest_addr              => link_dest_addr,
+        i_port_clock_controller  => w_port_controller_clock,
+        S_AXIS_T_READY           => w_ready,
+        S_AXIS_T_VALID           => S_AXIS_T_VALID,
+        S_AXIS_T_LAST            => S_AXIS_T_LAST,
+        i_flag                   => w_flag, 
+        i_seq_num                => w_seq_num, 
+        i_src_addr               => w_src_addr, 
+        i_dest_addr              => w_dest_addr,
         i_src_port               => i_src_port,
         o_dest_addr              => o_dest_addr,
         o_dest_port              => o_dest_port,
@@ -176,8 +211,34 @@ begin
         dest_addr_error          => dest_addr_not_found,
         sync_error               => sync_error,
         close_error              => close_error,
-        sync_close_error         => sync_close_error 
+        sync_close_error         => sync_close_error,
+        o_expected_seq_num       => w_expected_seq_num
     );
+
+    module_output_controller: output_controller
+    port map (        
+            slave_i_clk => slave_i_clk,
+            S_AXIS_T_LAST => S_AXIS_T_LAST,
+            i_flag => flags,
+            i_calc_checksum => o_calc_checksum,
+            i_dest_addr => o_dest_addr,
+            i_seq_num_expected => w_expected_seq_num,
+            i_packet_length_expected => w_calc_packet_lenght,
+            i_dest_port => o_dest_port,
+            o_calc_checksum_valid => o_calc_checksum_valid,
+            i_calc_checksum_ready => i_calc_checksum_ready,
+            o_seq_num_expected_valid => o_seq_num_expected_valid,
+            i_seq_num_expected_ready => i_seq_num_expected_ready,
+            o_payload_length_expected_valid => o_payload_length_expected_valid,
+            i_payload_length_expected_ready => i_payload_length_expected_ready,
+            master_i_ready => master_i_ready,
+            master_o_valid => master_o_valid,
+            master_o_last => master_o_last,
+            master_o_data => master_o_data,
+            master_o_dest_port => master_o_dest_port,
+            master_o_dest_addr => master_o_dest_addr,
+            master_o_flags => master_o_flags
+        );
 
     S_AXIS_T_READY <= w_ready;
 

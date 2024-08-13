@@ -12,42 +12,43 @@ architecture behavior of tb_top_module is
         signal S_AXIS_T_READY        : std_logic := '0';
         signal S_AXIS_T_DATA         : std_logic_vector(7 downto 0) := (others => '0');
         signal i_src_port            : std_logic_vector(4 downto 0) := (others => '0');
-        signal o_dest_port_valid     : std_logic := '0';
-        signal i_dest_port_ready     : std_logic := '0';
-        signal o_dest_addr_valid     : std_logic := '0';
-        signal i_dest_addr_ready     : std_logic := '0';
+        signal master_o_last         : std_logic := '0';
+        signal master_o_data         : std_logic_vector(7 downto 0)  := (others => '0');
+        signal master_o_dest_port    : std_logic_vector(04 downto 0) := (others => '0');
+        signal master_o_dest_addr    : std_logic_vector(15 downto 0) := (others => '0');
         signal o_calc_checksum_valid : std_logic := '0';
         signal i_calc_checksum_ready : std_logic := '0';
-        signal o_flags_valid         : std_logic := '0';
-        signal i_flags_ready         : std_logic := '0';
-        signal master_o_clock        : std_logic := '0';
-        signal master_o_data         : std_logic_vector(7 downto 0) := (others => '0');
+        signal o_seq_num_expected_valid : std_logic := '0';
+        signal i_seq_num_expected_ready : std_logic := '0';
+        signal o_payload_length_expected_valid : std_logic := '0';
+        signal i_payload_length_expected_ready : std_logic := '0';
+        signal master_i_ready : std_logic := '0';
+        signal master_o_valid : std_logic := '0';
+        signal master_o_flags : std_logic_vector(6 downto 0) := (others => '0');
+
 
     component top_module
     port(
         -- slave interface ports
-        slave_i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
-        S_AXIS_T_READY : out std_logic;
-        S_AXIS_T_DATA : in std_logic_vector(7 downto 0);
-        i_src_port : in std_logic_vector(4 downto 0);
-
-        -- master interface ports
-
-        -- controle da transmissão de dest_port
-        o_dest_port_valid : out std_logic;
-        i_dest_port_ready : in  std_logic;
-        -- controle da transmissão de dest_addr
-        o_dest_addr_valid : out std_logic;
-        i_dest_addr_ready : in  std_logic;
-        -- controle da transmissão de checksum
-        o_calc_checksum_valid : out std_logic;
-        i_calc_checksum_ready : in  std_logic;
-        -- controle da transmissão de flags
-        o_flags_valid : out std_logic;
-        i_flags_ready : in  std_logic;
-        
-        master_o_clock : out std_logic;
-        master_o_data : out std_logic_vector(7 downto 0)
+        slave_i_clk                     : in  std_logic;
+        S_AXIS_T_VALID                  : in  std_logic;
+        S_AXIS_T_LAST                   : in  std_logic;
+        S_AXIS_T_READY                  : out std_logic;
+        S_AXIS_T_DATA                   : in  std_logic_vector(7 downto 0);
+        i_src_port                      : in  std_logic_vector(4 downto 0);
+        o_calc_checksum_valid           : out std_logic;
+        i_calc_checksum_ready           : in  std_logic;
+        o_seq_num_expected_valid        : out std_logic;
+        i_seq_num_expected_ready        : in  std_logic;
+        o_payload_length_expected_valid : out std_logic;
+        i_payload_length_expected_ready : in  std_logic;
+        master_i_ready                  : in  std_logic;
+        master_o_valid                  : out std_logic;
+        master_o_data                   : out std_logic_vector(7 downto 0);
+        master_o_last                   : out std_logic := '0';
+        master_o_dest_port              : out std_logic_vector(04 downto 0);
+        master_o_dest_addr              : out std_logic_vector(15 downto 0);
+        master_o_flags                  : out std_logic_vector(06 downto 0)
     );
     end component;
 
@@ -85,16 +86,18 @@ begin
             S_AXIS_T_READY => S_AXIS_T_READY,
             i_src_port => i_src_port,
             S_AXIS_T_DATA => S_AXIS_T_DATA,
-            o_dest_port_valid => o_dest_port_valid,
-            i_dest_port_ready => i_dest_port_ready,
-            o_dest_addr_valid => o_dest_addr_valid,
-            i_dest_addr_ready => i_dest_addr_ready,
+            master_o_data => master_o_data,
+            master_o_dest_port => master_o_dest_port,
+            master_o_dest_addr => master_o_dest_addr,
+            master_o_last      => master_o_last,
             o_calc_checksum_valid => o_calc_checksum_valid,
             i_calc_checksum_ready => i_calc_checksum_ready,
-            o_flags_valid => o_flags_valid, 
-            i_flags_ready => i_flags_ready, 
-            master_o_clock => master_o_clock,
-            master_o_data => master_o_data
+            o_seq_num_expected_valid => o_seq_num_expected_valid,
+            i_seq_num_expected_ready => i_seq_num_expected_ready,
+            o_payload_length_expected_valid => o_payload_length_expected_valid,
+            i_payload_length_expected_ready => i_payload_length_expected_ready,
+            master_i_ready => master_i_ready,
+            master_o_valid => master_o_valid
     );
 
 

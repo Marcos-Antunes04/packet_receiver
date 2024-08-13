@@ -10,7 +10,8 @@ entity packet_length is
         S_AXIS_T_READY           : in std_logic;
         i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
-        o_packet_length_error    : out std_logic
+        o_packet_length_error    : out std_logic;
+        o_calc_packet_length     : out std_logic_vector(15 downto 0)
     );
 end packet_length;
 
@@ -25,6 +26,9 @@ signal COUNTER_NEXT             : std_logic_vector(15 downto 0) := (others => '0
 signal PACKET_LENGTH_ERROR_REG  : std_logic := '0';
 signal PACKET_LENGTH_ERROR_NEXT : std_logic := '0';
 
+signal CALC_PACKET_LENGTH_REG   : std_logic_vector(15 downto 0) := (others => '0'); 
+signal CALC_PACKET_LENGTH_NEXT  : std_logic_vector(15 downto 0) := (others => '0'); 
+
 begin
 
     state_machine: process(i_clk) 
@@ -33,6 +37,7 @@ begin
             r_STATE_REG             <= r_STATE_NEXT;
             PACKET_LENGTH_ERROR_REG <= PACKET_LENGTH_ERROR_NEXT;
             COUNTER_REG             <= COUNTER_NEXT;
+            CALC_PACKET_LENGTH_REG  <= CALC_PACKET_LENGTH_NEXT; 
         end if;
     end process;
     
@@ -52,11 +57,12 @@ begin
         end case;
     end process;
 
-    datapath: process(r_STATE_REG, COUNTER_REG, PACKET_LENGTH_ERROR_REG, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
+    datapath: process(r_STATE_REG, COUNTER_REG, PACKET_LENGTH_ERROR_REG, CALC_PACKET_LENGTH_REG, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
     begin
         -- default values
         PACKET_LENGTH_ERROR_NEXT <= PACKET_LENGTH_ERROR_REG;
         COUNTER_NEXT             <= COUNTER_REG;
+        CALC_PACKET_LENGTH_NEXT  <= CALC_PACKET_LENGTH_REG;
 
         case r_STATE_REG is
             when COUNTING =>
@@ -69,6 +75,7 @@ begin
                     PACKET_LENGTH_ERROR_NEXT <= '0';
                 else
                     PACKET_LENGTH_ERROR_NEXT <= '1';
+                    CALC_PACKET_LENGTH_NEXT <= COUNTER_REG;
                 end if;
 
                 COUNTER_NEXT <= X"0001";
@@ -78,6 +85,7 @@ begin
 
 
 
-    o_packet_length_error <= PACKET_LENGTH_ERROR_NEXT; 
+    o_packet_length_error <= PACKET_LENGTH_ERROR_NEXT;
+    o_calc_packet_length  <= CALC_PACKET_LENGTH_NEXT;
 
 end behavioral;

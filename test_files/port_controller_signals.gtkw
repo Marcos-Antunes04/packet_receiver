@@ -1,36 +1,36 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Fri Aug  9 19:55:31 2024
+[*] Tue Aug 13 20:15:24 2024
 [*]
 [dumpfile] "/home/marcos/my_repo/top_module.vcd"
-[dumpfile_mtime] "Fri Aug  9 19:54:26 2024"
-[dumpfile_size] 173586
+[dumpfile_mtime] "Tue Aug 13 19:35:43 2024"
+[dumpfile_size] 173442
 [savefile] "/home/marcos/my_repo/test_files/port_controller_signals.gtkw"
 [timestart] 0
 [size] 1908 987
-[pos] -266 -149
-*-25.000000 92400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -802 -105
+*-23.000000 39170000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_top_module.
 [treeopen] tb_top_module.master_module.
-[sst_width] 214
-[signals_width] 230
+[sst_width] 328
+[signals_width] 238
 [sst_expanded] 1
 [sst_vpaned_height] 275
 @28
 tb_top_module.master_module.module_header_extractor.i_clk
 @22
-tb_top_module.master_module.module_header_extractor.S_AXIS_T_DATA[7:0]
+tb_top_module.master_module.s_axis_t_data[7:0]
+tb_top_module.master_module.module_header_extractor.seq_num_next[31:0]
+tb_top_module.master_module.module_header_extractor.packet_length_next[15:0]
+tb_top_module.master_module.module_header_extractor.checksum_next[15:0]
 @28
-tb_top_module.master_module.module_header_extractor.S_AXIS_T_LAST
+tb_top_module.master_module.module_port_controller.s_axis_t_last
 tb_top_module.master_module.module_port_controller.i_port_clock_controller
-@22
-tb_top_module.master_module.module_port_controller.i_seq_num[31:0]
-tb_top_module.master_module.module_port_controller.seq_num_next[31:0]
-tb_top_module.master_module.module_port_controller.flag_next[7:0]
-tb_top_module.master_module.module_port_controller.src_addr_next[15:0]
-tb_top_module.master_module.module_port_controller.dest_addr_next[15:0]
-tb_top_module.master_module.module_port_controller.dest_port_next[4:0]
+tb_top_module.master_module.module_header_extractor.o_port_controller_clock
+tb_top_module.master_module.module_header_extractor.port_controller_clock_next
+@24
+tb_top_module.master_module.module_header_extractor.ctrl_reg[1:0]
 @25
-tb_top_module.master_module.module_port_controller.estado[2:0]
+tb_top_module.master_module.module_header_extractor.ctrl_next[1:0]
 [pattern_trace] 1
 [pattern_trace] 0
