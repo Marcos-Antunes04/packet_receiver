@@ -39,25 +39,43 @@ end output_controller;
 
 architecture behavioral of output_controller is
 type state_type is (IDLE, START, CALC_CHECKSUM_SENT, EXPECTED_SEQ_NUM_SENT, EXPECTED_PACKET_LENGTH_SENT);
-signal r_STATE_REG              : state_type := IDLE; -- por padrão o estado começa como idle
-signal r_STATE_NEXT             : state_type;
+signal STATE_REG              : state_type := IDLE; -- por padrão o estado começa como idle
+signal STATE_NEXT             : state_type;
+
+signal FLAGS_REG              : std_logic_vector(06 downto 0);
+signal FLAGS_NEXT              : std_logic_vector(06 downto 0);
+
+signal CALC_CHECKSUM_REG              : std_logic_vector(06 downto 0);
+signal CALC_CHECKSUM_NEXT              : std_logic_vector(06 downto 0);
+
+signal DEST_ADDR_REG              : std_logic_vector(06 downto 0);
+signal DEST_ADDR_NEXT              : std_logic_vector(06 downto 0);
+
+signal SEQ_NUM_EXPECTED_REG              : std_logic_vector(06 downto 0);
+signal SEQ_NUM_EXPECTED_NEXT              : std_logic_vector(06 downto 0);
+
+signal PACKET_LENGTH_REG              : std_logic_vector(06 downto 0);
+signal PACKET_LENGTH_NEXT              : std_logic_vector(06 downto 0);
+
+signal DEST_PORT_REG              : std_logic_vector(06 downto 0);
+signal DEST_PORT_NEXT              : std_logic_vector(06 downto 0);
 
 begin
-    process(r_STATE_REG)
+    process(STATE_REG)
     begin
         if(rising_edge(slave_i_clk)) then
-            r_STATE_REG <= r_STATE_NEXT;
+            STATE_REG <= STATE_NEXT;
         end if;
     end process;
 
-    process(r_STATE_REG, S_AXIS_T_LAST)
+    process(STATE_REG, S_AXIS_T_LAST)
     begin
         -- default value
-        r_STATE_NEXT <= r_STATE_REG;
-        case r_STATE_REG is
+        STATE_NEXT <= STATE_REG;
+        case STATE_REG is
             when idle =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= START;
+                    STATE_NEXT <= START;
                 end if;
             when START =>
 
@@ -71,12 +89,16 @@ begin
         end case;
     end process;
 
-    process(r_STATE_REG, S_AXIS_T_LAST)
+    process(STATE_REG, S_AXIS_T_LAST)
     begin
-        case r_STATE_REG is
+        case STATE_REG is
             when idle =>
 
             when START =>
+                if(S_AXIS_T_LAST = '1') then
+
+                    
+                end if;
 
             when CALC_CHECKSUM_SENT =>
 

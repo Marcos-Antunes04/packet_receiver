@@ -27,8 +27,8 @@ end port_controller;
 
 architecture behavioral of port_controller is
 type state_type is (START, SEQ_NUM_CAPTURE, FLAG_CAPTURE, SRC_ADDR_CAPTURE, DEST_ADDR_CAPTURE);
-signal r_STATE_REG  : state_type := START; -- por padrão, o estado começa como START
-signal r_STATE_NEXT : state_type;
+signal STATE_REG  : state_type := START; -- por padrão, o estado começa como START
+signal STATE_NEXT : state_type;
 
 signal OPEN_PORTS_REG         : std_logic_vector(4 downto 0)   := (others => '1');
 signal OPEN_PORTS_NEXT        : std_logic_vector(4 downto 0)   := (others => '1'); -- por padrão, todas as portas são inicializadas livres
@@ -67,7 +67,7 @@ begin
     process(i_port_clock_controller)
     begin
         if(rising_edge(i_port_clock_controller)) then
-            r_STATE_REG           <= r_STATE_NEXT;
+            STATE_REG             <= STATE_NEXT;
             SEQ_NUM_ERROR_REG     <= SEQ_NUM_ERROR_NEXT;
             OPEN_PORTS_REG        <= OPEN_PORTS_NEXT;
             FLAG_REG              <= FLAG_NEXT;
@@ -85,47 +85,47 @@ begin
         end if;
     end process;
 
-    process(r_STATE_REG, S_AXIS_T_LAST, S_AXIS_T_READY, S_AXIS_T_VALID)
+    process(STATE_REG, S_AXIS_T_LAST, S_AXIS_T_READY, S_AXIS_T_VALID)
     begin
         -- default value
-        r_STATE_NEXT <= r_STATE_REG;
-        case r_STATE_REG is
+        STATE_NEXT <= STATE_REG;
+        case STATE_REG is
             when START =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= DEST_ADDR_CAPTURE;
+                    STATE_NEXT <= DEST_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
-                    r_STATE_NEXT <= SEQ_NUM_CAPTURE;
+                    STATE_NEXT <= SEQ_NUM_CAPTURE;
                 end if;
             when SEQ_NUM_CAPTURE   =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= FLAG_CAPTURE;
+                    STATE_NEXT <= FLAG_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
-                    r_STATE_NEXT <= FLAG_CAPTURE;
+                    STATE_NEXT <= FLAG_CAPTURE;
                 end if;
             when FLAG_CAPTURE =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= SRC_ADDR_CAPTURE;
+                    STATE_NEXT <= SRC_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
-                    r_STATE_NEXT <= SRC_ADDR_CAPTURE;
+                    STATE_NEXT <= SRC_ADDR_CAPTURE;
                 end if;
             when SRC_ADDR_CAPTURE  =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= DEST_ADDR_CAPTURE;
+                    STATE_NEXT <= DEST_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
-                    r_STATE_NEXT <= DEST_ADDR_CAPTURE;
+                    STATE_NEXT <= DEST_ADDR_CAPTURE;
                 end if;
             when DEST_ADDR_CAPTURE =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= r_STATE_REG;
+                    STATE_NEXT <= STATE_REG;
                 else
-                    r_STATE_NEXT <= SEQ_NUM_CAPTURE;
+                    STATE_NEXT <= SEQ_NUM_CAPTURE;
                 end if;
             when others =>
         end case;
     end process;
                   
     -- operações de estado
-    process(r_STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG, EXPECTED_SEQ_NUM_REG)
+    process(STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG, EXPECTED_SEQ_NUM_REG)
     begin
         OPEN_PORTS_NEXT       <= OPEN_PORTS_REG;
         FLAG_NEXT             <= FLAG_REG;
@@ -142,7 +142,7 @@ begin
         DEST_ADDR_ERROR_NEXT  <= DEST_ADDR_ERROR_REG;
         EXPECTED_SEQ_NUM_NEXT <= EXPECTED_SEQ_NUM_REG;
 
-        case r_STATE_REG is
+        case STATE_REG is
             -- início do pacote
             when START =>
                 DEST_PORT_NEXT         <= (others => '0');

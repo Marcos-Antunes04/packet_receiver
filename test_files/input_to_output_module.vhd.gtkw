@@ -1,0 +1,30 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Wed Aug 14 18:36:35 2024
+[*]
+[dumpfile] "/home/marcos/my_repo/top_module.vcd"
+[dumpfile_mtime] "Wed Aug 14 18:00:51 2024"
+[dumpfile_size] 201165
+[savefile] "/home/marcos/my_repo/test_files/input_to_output_module.vhd.gtkw"
+[timestart] 0
+[size] 1908 987
+[pos] -802 -105
+*-25.000000 239900000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_top_module.
+[treeopen] tb_top_module.master_module.
+[sst_width] 214
+[signals_width] 238
+[sst_expanded] 1
+[sst_vpaned_height] 288
+@28
+tb_top_module.master_module.module_checksum.i_clk
+tb_top_module.master_module.module_checksum.s_axis_t_last
+@22
+tb_top_module.master_module.flags[6:0]
+tb_top_module.master_module.module_port_controller.o_expected_seq_num[31:0]
+tb_top_module.master_module.module_packet_length.o_calc_packet_length[15:0]
+tb_top_module.master_module.module_port_controller.o_dest_addr[15:0]
+tb_top_module.master_module.module_port_controller.o_dest_port[4:0]
+tb_top_module.master_module.module_checksum.o_calc_checksum[15:0]
+[pattern_trace] 1
+[pattern_trace] 0

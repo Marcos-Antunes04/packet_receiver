@@ -6,24 +6,24 @@ entity tb_top_module is
 end tb_top_module;
 
 architecture behavior of tb_top_module is
-        signal slave_i_clk           : std_logic := '0';
-        signal S_AXIS_T_VALID        : std_logic := '0';
-        signal S_AXIS_T_LAST         : std_logic := '0';
-        signal S_AXIS_T_READY        : std_logic := '0';
-        signal S_AXIS_T_DATA         : std_logic_vector(7 downto 0) := (others => '0');
-        signal i_src_port            : std_logic_vector(4 downto 0) := (others => '0');
-        signal master_o_last         : std_logic := '0';
-        signal master_o_data         : std_logic_vector(7 downto 0)  := (others => '0');
-        signal master_o_dest_port    : std_logic_vector(04 downto 0) := (others => '0');
-        signal master_o_dest_addr    : std_logic_vector(15 downto 0) := (others => '0');
-        signal o_calc_checksum_valid : std_logic := '0';
-        signal i_calc_checksum_ready : std_logic := '0';
-        signal o_seq_num_expected_valid : std_logic := '0';
-        signal i_seq_num_expected_ready : std_logic := '0';
+        signal slave_i_clk                     : std_logic := '0';
+        signal S_AXIS_T_VALID                  : std_logic := '0';
+        signal S_AXIS_T_LAST                   : std_logic := '0';
+        signal S_AXIS_T_READY                  : std_logic := '0';
+        signal S_AXIS_T_DATA                   : std_logic_vector(7 downto 0) := (others => '0');
+        signal i_src_port                      : std_logic_vector(4 downto 0) := (others => '0');
+        signal master_o_last                   : std_logic := '0';
+        signal master_o_data                   : std_logic_vector(7 downto 0)  := (others => '0');
+        signal master_o_dest_port              : std_logic_vector(04 downto 0) := (others => '0');
+        signal master_o_dest_addr              : std_logic_vector(15 downto 0) := (others => '0');
+        signal o_calc_checksum_valid           : std_logic := '0';
+        signal i_calc_checksum_ready           : std_logic := '0';
+        signal o_seq_num_expected_valid        : std_logic := '0';
+        signal i_seq_num_expected_ready        : std_logic := '0';
         signal o_payload_length_expected_valid : std_logic := '0';
         signal i_payload_length_expected_ready : std_logic := '0';
-        signal master_i_ready : std_logic := '0';
-        signal master_o_valid : std_logic := '0';
+        signal master_i_ready : std_logic      := '0';
+        signal master_o_valid : std_logic      := '0';
         signal master_o_flags : std_logic_vector(6 downto 0) := (others => '0');
 
 
@@ -97,7 +97,8 @@ begin
             o_payload_length_expected_valid => o_payload_length_expected_valid,
             i_payload_length_expected_ready => i_payload_length_expected_ready,
             master_i_ready => master_i_ready,
-            master_o_valid => master_o_valid
+            master_o_valid => master_o_valid,
+            master_o_flags => master_o_flags
     );
 
 

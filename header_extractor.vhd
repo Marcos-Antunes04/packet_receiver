@@ -6,11 +6,11 @@ entity header_extractor is
     port(
         -- input ports
         i_clk                   : in std_logic;
-        S_AXIS_T_VALID                 : in std_logic;
-        S_AXIS_T_LAST                  : in std_logic;
-        S_AXIS_T_READY                 : in std_logic;
-        S_AXIS_T_DATA                  : in std_logic_vector(7 downto 0);
-        -- output ports        
+        S_AXIS_T_VALID          : in std_logic;
+        S_AXIS_T_LAST           : in std_logic;
+        S_AXIS_T_READY          : in std_logic;
+        S_AXIS_T_DATA           : in std_logic_vector(7 downto 0);
+        -- output ports 
         o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
         o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
         o_seq_num               : out std_logic_vector(31 downto 0) := (others => '0');
@@ -23,8 +23,8 @@ end header_extractor;
 
 architecture behavioral of header_extractor is
 type state_type is (PACKET_LENGTH, CHECKSUM, SEQ_NUM, FLAG, PROTOCOL, DUMMY, SOURCE_ADDRESS, DESTINATION_ADDRESS, PAYLOAD, FINISHED); 
-signal r_STATE_REG                : state_type := PACKET_LENGTH; -- estado inicial setado como pl1
-signal r_STATE_NEXT               : state_type;
+signal STATE_REG                : state_type := PACKET_LENGTH; -- estado inicial setado como pl1
+signal STATE_NEXT               : state_type;
         
 signal PACKET_LENGTH_REG          : std_logic_vector(15 downto 0) := (others => '0');
 signal PACKET_LENGTH_NEXT         : std_logic_vector(15 downto 0) := (others => '0');
@@ -55,7 +55,7 @@ begin
     process(i_clk)
     begin
         if(rising_edge(i_clk)) then
-            r_STATE_REG               <= r_STATE_NEXT;
+            STATE_REG               <= STATE_NEXT;
             PACKET_LENGTH_REG         <= PACKET_LENGTH_NEXT;
             SEQ_NUM_REG               <= SEQ_NUM_NEXT;
             SRC_ADDR_REG              <= SRC_ADDR_NEXT;
@@ -68,96 +68,96 @@ begin
     end process;
 
     -- lógica de próximo estado
-    process(r_STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
+    process(STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
     begin
         --default value
-        r_STATE_NEXT <= r_STATE_REG;
+        STATE_NEXT <= STATE_REG;
 
-        case(r_STATE_REG) is
+        case(STATE_REG) is
             when PACKET_LENGTH =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "01") then
-                        r_STATE_NEXT <= CHECKSUM;
+                        STATE_NEXT <= CHECKSUM;
                     end if;
                 end if;
 
             when CHECKSUM =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "01") then
-                        r_STATE_NEXT <= SEQ_NUM;
+                        STATE_NEXT <= SEQ_NUM;
                     end if;
                 end if;
 
             when SEQ_NUM =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "11") then
-                        r_STATE_NEXT <= FLAG;
+                        STATE_NEXT <= FLAG;
                     end if;
                 end if;
 
             when FLAG =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     else
-                        r_STATE_NEXT <= PROTOCOL;
+                        STATE_NEXT <= PROTOCOL;
                     end if;
                 end if;
             when PROTOCOL =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     else
-                        r_STATE_NEXT <= DUMMY;
+                        STATE_NEXT <= DUMMY;
                     end if;
                 end if;
             when DUMMY  =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "01") then
-                        r_STATE_NEXT <= SOURCE_ADDRESS;
+                        STATE_NEXT <= SOURCE_ADDRESS;
                     end if;
                 end if;
 
             when SOURCE_ADDRESS =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "01") then
-                        r_STATE_NEXT <= DESTINATION_ADDRESS;
+                        STATE_NEXT <= DESTINATION_ADDRESS;
                     end if;
                 end if;
 
             when DESTINATION_ADDRESS     =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
                     if (S_AXIS_T_LAST = '1') then 
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     elsif(CTRL_REG = "01") then
-                        r_STATE_NEXT <= PAYLOAD;
+                        STATE_NEXT <= PAYLOAD;
                     end if;
                 end if;
 
             when PAYLOAD  =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= FINISHED;
+                    STATE_NEXT <= FINISHED;
                 end if;
             when FINISHED =>
                 if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and S_AXIS_T_LAST = '0') then
-                    --r_STATE_NEXT <= PACKET_LENGTH_2;
-                    r_STATE_NEXT <= PACKET_LENGTH;
+                    --STATE_NEXT <= PACKET_LENGTH_2;
+                    STATE_NEXT <= PACKET_LENGTH;
                 end if;
         end case;
     end process;
 
     -- datapath
-    process(r_STATE_REG, PACKET_LENGTH_REG,CHECKSUM_REG,SEQ_NUM_REG,SRC_ADDR_REG,DEST_ADDR_REG, FLAG_REG, CTRL_REG, S_AXIS_T_DATA)
+    process(STATE_REG, PACKET_LENGTH_REG,CHECKSUM_REG,SEQ_NUM_REG,SRC_ADDR_REG,DEST_ADDR_REG, FLAG_REG, CTRL_REG, S_AXIS_T_DATA)
     begin
         -- dafault values
         PACKET_LENGTH_NEXT         <= PACKET_LENGTH_REG;
@@ -169,7 +169,7 @@ begin
         PORT_CONTROLLER_CLOCK_NEXT <= PORT_CONTROLLER_CLOCK_REG;
         CTRL_NEXT                  <= CTRL_REG; 
 
-        case(r_STATE_REG) is
+        case(STATE_REG) is
             when PACKET_LENGTH =>
                 case CTRL_REG is
                     when "00" =>

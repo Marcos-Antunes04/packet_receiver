@@ -18,8 +18,8 @@ end checksum;
 
 architecture behavioral of checksum is
 type state_type is (EXEC, FINISHED);
-signal r_STATE_REG         : state_type := EXEC; -- por padrão o estado começa como most significant
-signal r_STATE_NEXT        : state_type;
+signal STATE_REG         : state_type := EXEC; -- por padrão o estado começa como most significant
+signal STATE_NEXT        : state_type;
 
 signal CHECK_VALUE_REG     : std_logic_vector(31 downto 0) := (others => '0');
 signal CHECK_VALUE_NEXT    : std_logic_vector(31 downto 0) := (others => '0');
@@ -41,7 +41,7 @@ begin
     clk_process: process(i_clk)
     begin
         if(rising_edge(i_clk)) then
-            r_STATE_REG        <= r_STATE_NEXT       ;
+            STATE_REG        <= STATE_NEXT       ;
             CHECK_VALUE_REG    <= CHECK_VALUE_NEXT   ;
             CHECK_ERROR_REG    <= CHECK_ERROR_NEXT   ;
             CHECK_INTERMED_REG <= CHECK_INTERMED_NEXT;
@@ -51,24 +51,24 @@ begin
     end process;
 
     -- lógica de próximo estado
-    next_state: process(r_STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
+    next_state: process(STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
     begin
         -- default value
-        r_STATE_NEXT <= r_STATE_REG;
+        STATE_NEXT <= STATE_REG;
         CTRL_NEXT    <= CTRL_REG;
 
-        case(r_STATE_REG) is
+        case(STATE_REG) is
             when EXEC =>
                 if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' then
                     CTRL_NEXT <= not CTRL_REG;
                     if(S_AXIS_T_LAST = '1') then
-                        r_STATE_NEXT <= FINISHED;
+                        STATE_NEXT <= FINISHED;
                     end if;
                 end if;
 
             when FINISHED =>
                 if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1'then
-                        r_STATE_NEXT <= EXEC;
+                        STATE_NEXT <= EXEC;
                         CTRL_NEXT <= '1';
                 end if;
 
@@ -78,7 +78,7 @@ begin
 
 
     
-    datapath: process(r_STATE_REG,CHECK_VALUE_REG,CHECK_INTERMED_REG, CHECK_CALC_REG, CHECK_ERROR_REG, CTRL_REG, S_AXIS_T_DATA, i_received_checksum, S_AXIS_T_LAST)
+    datapath: process(STATE_REG,CHECK_VALUE_REG,CHECK_INTERMED_REG, CHECK_CALC_REG, CHECK_ERROR_REG, CTRL_REG, S_AXIS_T_DATA, i_received_checksum, S_AXIS_T_LAST)
     begin
         -- default values
         CHECK_ERROR_NEXT    <= CHECK_ERROR_REG;
@@ -86,7 +86,7 @@ begin
         CHECK_VALUE_NEXT    <= CHECK_VALUE_REG;
         CHECK_CALC_NEXT     <= CHECK_CALC_REG;
 
-        case(r_STATE_REG) is
+        case(STATE_REG) is
             when EXEC =>
                 if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and CTRL_REG = '0' then
                     CHECK_INTERMED_NEXT <= S_AXIS_T_DATA;

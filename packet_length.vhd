@@ -17,8 +17,8 @@ end packet_length;
 
 architecture behavioral of packet_length is
 type state_type is (COUNTING, FINISHED);
-signal r_STATE_REG              : state_type := COUNTING; -- por padrão o estado começa como counting
-signal r_STATE_NEXT             : state_type;
+signal STATE_REG              : state_type := COUNTING; -- por padrão o estado começa como counting
+signal STATE_NEXT             : state_type;
 
 signal COUNTER_REG              : std_logic_vector(15 downto 0) := (others => '0');
 signal COUNTER_NEXT             : std_logic_vector(15 downto 0) := (others => '0');
@@ -34,37 +34,37 @@ begin
     state_machine: process(i_clk) 
     begin
         if(rising_edge(i_clk)) then
-            r_STATE_REG             <= r_STATE_NEXT;
+            STATE_REG               <= STATE_NEXT;
             PACKET_LENGTH_ERROR_REG <= PACKET_LENGTH_ERROR_NEXT;
             COUNTER_REG             <= COUNTER_NEXT;
             CALC_PACKET_LENGTH_REG  <= CALC_PACKET_LENGTH_NEXT; 
         end if;
     end process;
     
-    next_state: process(r_STATE_REG, S_AXIS_T_LAST)
+    next_state: process(STATE_REG, S_AXIS_T_LAST)
     begin
         -- default value
-        r_STATE_NEXT <= r_STATE_REG;
+        STATE_NEXT <= STATE_REG;
 
-        case r_STATE_REG is
+        case STATE_REG is
             when COUNTING =>
                 if(S_AXIS_T_LAST = '1') then
-                    r_STATE_NEXT <= FINISHED;
+                    STATE_NEXT <= FINISHED;
                 end if;
             when FINISHED =>
-                r_STATE_NEXT <= COUNTING;
+                STATE_NEXT <= COUNTING;
             when others =>
         end case;
     end process;
 
-    datapath: process(r_STATE_REG, COUNTER_REG, PACKET_LENGTH_ERROR_REG, CALC_PACKET_LENGTH_REG, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
+    datapath: process(STATE_REG, COUNTER_REG, PACKET_LENGTH_ERROR_REG, CALC_PACKET_LENGTH_REG, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
     begin
         -- default values
         PACKET_LENGTH_ERROR_NEXT <= PACKET_LENGTH_ERROR_REG;
         COUNTER_NEXT             <= COUNTER_REG;
         CALC_PACKET_LENGTH_NEXT  <= CALC_PACKET_LENGTH_REG;
 
-        case r_STATE_REG is
+        case STATE_REG is
             when COUNTING =>
                 PACKET_LENGTH_ERROR_NEXT <= '0';
                 if(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1' and S_AXIS_T_LAST = '0') then
