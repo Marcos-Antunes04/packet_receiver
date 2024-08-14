@@ -12,18 +12,12 @@ architecture behavior of tb_top_module is
         signal S_AXIS_T_READY                  : std_logic := '0';
         signal S_AXIS_T_DATA                   : std_logic_vector(7 downto 0) := (others => '0');
         signal i_src_port                      : std_logic_vector(4 downto 0) := (others => '0');
-        signal master_o_last                   : std_logic := '0';
-        signal master_o_data                   : std_logic_vector(7 downto 0)  := (others => '0');
+        signal M_AXIS_TLAST                   : std_logic := '0';
+        signal M_AXIS_TDATA                   : std_logic_vector(7 downto 0)  := (others => '0');
         signal master_o_dest_port              : std_logic_vector(04 downto 0) := (others => '0');
         signal master_o_dest_addr              : std_logic_vector(15 downto 0) := (others => '0');
-        signal o_calc_checksum_valid           : std_logic := '0';
-        signal i_calc_checksum_ready           : std_logic := '0';
-        signal o_seq_num_expected_valid        : std_logic := '0';
-        signal i_seq_num_expected_ready        : std_logic := '0';
-        signal o_payload_length_expected_valid : std_logic := '0';
-        signal i_payload_length_expected_ready : std_logic := '0';
-        signal master_i_ready : std_logic      := '0';
-        signal master_o_valid : std_logic      := '0';
+        signal M_AXIS_TREADY : std_logic      := '0';
+        signal M_AXIS_TVALID : std_logic      := '0';
         signal master_o_flags : std_logic_vector(6 downto 0) := (others => '0');
 
 
@@ -36,16 +30,10 @@ architecture behavior of tb_top_module is
         S_AXIS_T_READY                  : out std_logic;
         S_AXIS_T_DATA                   : in  std_logic_vector(7 downto 0);
         i_src_port                      : in  std_logic_vector(4 downto 0);
-        o_calc_checksum_valid           : out std_logic;
-        i_calc_checksum_ready           : in  std_logic;
-        o_seq_num_expected_valid        : out std_logic;
-        i_seq_num_expected_ready        : in  std_logic;
-        o_payload_length_expected_valid : out std_logic;
-        i_payload_length_expected_ready : in  std_logic;
-        master_i_ready                  : in  std_logic;
-        master_o_valid                  : out std_logic;
-        master_o_data                   : out std_logic_vector(7 downto 0);
-        master_o_last                   : out std_logic := '0';
+        M_AXIS_TREADY                  : in  std_logic;
+        M_AXIS_TVALID                  : out std_logic;
+        M_AXIS_TDATA                   : out std_logic_vector(7 downto 0);
+        M_AXIS_TLAST                   : out std_logic := '0';
         master_o_dest_port              : out std_logic_vector(04 downto 0);
         master_o_dest_addr              : out std_logic_vector(15 downto 0);
         master_o_flags                  : out std_logic_vector(06 downto 0)
@@ -86,18 +74,12 @@ begin
             S_AXIS_T_READY => S_AXIS_T_READY,
             i_src_port => i_src_port,
             S_AXIS_T_DATA => S_AXIS_T_DATA,
-            master_o_data => master_o_data,
+            M_AXIS_TDATA => M_AXIS_TDATA,
             master_o_dest_port => master_o_dest_port,
             master_o_dest_addr => master_o_dest_addr,
-            master_o_last      => master_o_last,
-            o_calc_checksum_valid => o_calc_checksum_valid,
-            i_calc_checksum_ready => i_calc_checksum_ready,
-            o_seq_num_expected_valid => o_seq_num_expected_valid,
-            i_seq_num_expected_ready => i_seq_num_expected_ready,
-            o_payload_length_expected_valid => o_payload_length_expected_valid,
-            i_payload_length_expected_ready => i_payload_length_expected_ready,
-            master_i_ready => master_i_ready,
-            master_o_valid => master_o_valid,
+            M_AXIS_TLAST      => M_AXIS_TLAST,
+            M_AXIS_TREADY => M_AXIS_TREADY,
+            M_AXIS_TVALID => M_AXIS_TVALID,
             master_o_flags => master_o_flags
     );
 

@@ -17,8 +17,8 @@ end packet_length;
 
 architecture behavioral of packet_length is
 type state_type is (COUNTING, FINISHED);
-signal STATE_REG              : state_type := COUNTING; -- por padrão o estado começa como counting
-signal STATE_NEXT             : state_type;
+signal STATE_REG                : state_type := COUNTING; -- por padrão o estado começa como counting
+signal STATE_NEXT               : state_type;
 
 signal COUNTER_REG              : std_logic_vector(15 downto 0) := (others => '0');
 signal COUNTER_NEXT             : std_logic_vector(15 downto 0) := (others => '0');
