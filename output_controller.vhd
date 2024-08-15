@@ -50,6 +50,7 @@ signal CTRL_NEXT                        : std_logic_vector(03 downto 0) := (othe
 
 signal w_master_valid                   : std_logic := '0';
 signal w_master_last                    : std_logic := '0';
+signal w_master_data                    : std_logic_vector(07 downto 0) := (others => '0');
 
 signal estado : std_logic_vector(1 downto 0);
 
@@ -136,12 +137,12 @@ begin
                 case CTRL_REG is
                     when "0000" => -- packet_length 1
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= PACKET_LENGTH_REG(15 downto 8);
+                            w_master_data <= PACKET_LENGTH_REG(15 downto 8);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "0001" => -- packet_length 2
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= PACKET_LENGTH_REG(07 downto 0);
+                            w_master_data <= PACKET_LENGTH_REG(07 downto 0);
                         end if;
 
                         if   (FLAGS_REG(1) = '1') then -- checksum error
@@ -156,12 +157,12 @@ begin
 
                     when "0010" => -- checksum 1
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= CALC_CHECKSUM_REG(15 downto 8);
+                            w_master_data <= CALC_CHECKSUM_REG(15 downto 8);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "0011" => -- checksum 2
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= CALC_CHECKSUM_REG(07 downto 0);
+                            w_master_data <= CALC_CHECKSUM_REG(07 downto 0);
                         end if;
 
                         if   (FLAGS_REG(2) = '1') then -- seq_num error
@@ -174,22 +175,22 @@ begin
 
                     when "0100" => -- seq_num 1
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= SEQ_NUM_EXPECTED_REG(31 downto 24);
+                            w_master_data <= SEQ_NUM_EXPECTED_REG(31 downto 24);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "0101" => -- seq_num 2
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= SEQ_NUM_EXPECTED_REG(23 downto 16);
+                            w_master_data <= SEQ_NUM_EXPECTED_REG(23 downto 16);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "0110" => -- seq_num 3
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= SEQ_NUM_EXPECTED_REG(15 downto 8);
+                            w_master_data <= SEQ_NUM_EXPECTED_REG(15 downto 8);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "0111" => -- seq_num 4
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= SEQ_NUM_EXPECTED_REG(07 downto 0);
+                            w_master_data <= SEQ_NUM_EXPECTED_REG(07 downto 0);
                         end if;
 
                         if(FLAGS_REG(3) = '1') then -- destination address not found
@@ -199,13 +200,13 @@ begin
                         end if; 
                     when "1000" => -- dest_addr 1
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= DEST_ADDR_REG(15 downto 8);
+                            w_master_data <= DEST_ADDR_REG(15 downto 8);
                             CTRL_NEXT <= "0001";
                         end if;
                     when "1001" => -- dest_addr 2
                         w_master_last <= '1';
                         if(M_AXIS_TREADY = '1') then
-                            M_AXIS_TDATA <= DEST_ADDR_REG(07 downto 0);
+                            w_master_data <= DEST_ADDR_REG(07 downto 0);
                         end if;
 
                     when others =>
@@ -220,5 +221,6 @@ begin
 
     M_AXIS_TVALID      <= w_master_valid;
     M_AXIS_TLAST       <= w_master_last;
+    M_AXIS_TDATA       <= w_master_data;
 
 end behavioral;
