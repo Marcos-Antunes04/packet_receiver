@@ -1,29 +1,36 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Tue Aug 13 19:41:09 2024
+[*] Thu Aug 15 21:42:48 2024
 [*]
-[dumpfile] "/home/marcos/my_repo/top_module.vcd"
-[dumpfile_mtime] "Tue Aug 13 19:35:43 2024"
-[dumpfile_size] 173442
-[savefile] "/home/marcos/my_repo/test_files/output_control_signals.gtkw"
+[dumpfile] "/home/marcos/Desktop/receiver/top_module.vcd"
+[dumpfile_mtime] "Thu Aug 15 21:29:20 2024"
+[dumpfile_size] 201135
+[savefile] "/home/marcos/Desktop/receiver/test_files/output_control_signals.gtkw"
 [timestart] 0
-[size] 1908 987
-[pos] -802 -105
-*-26.000000 292500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1870 1016
+[pos] -51 -51
+*-24.000000 72220000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_top_module.
 [treeopen] tb_top_module.master_module.
-[sst_width] 214
-[signals_width] 230
+[sst_width] 233
+[signals_width] 270
 [sst_expanded] 1
 [sst_vpaned_height] 275
 @28
 tb_top_module.master_module.module_header_extractor.i_clk
-@29
 tb_top_module.master_module.module_port_controller.s_axis_t_last
 @22
-tb_top_module.master_module.module_checksum.o_calc_checksum[15:0]
-tb_top_module.master_module.flags[6:0]
-tb_top_module.master_module.module_header_extractor.o_dest_addr[15:0]
-tb_top_module.master_module.module_port_controller.o_dest_port[4:0]
+tb_top_module.master_module.module_output_controller.flags_next[6:0]
+tb_top_module.master_module.module_output_controller.calc_checksum_next[15:0]
+tb_top_module.master_module.module_output_controller.dest_addr_next[15:0]
+tb_top_module.master_module.module_output_controller.seq_num_expected_next[31:0]
+tb_top_module.master_module.module_output_controller.packet_length_next[15:0]
+tb_top_module.master_module.module_packet_length.calc_packet_length_next[15:0]
+tb_top_module.master_module.module_packet_length.o_calc_packet_length[15:0]
+tb_top_module.master_module.module_output_controller.i_packet_length_expected[15:0]
+@24
+tb_top_module.master_module.module_output_controller.estado[1:0]
+@23
+tb_top_module.master_module.module_output_controller.i_seq_num_expected[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

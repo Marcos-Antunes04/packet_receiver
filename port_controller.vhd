@@ -35,7 +35,10 @@ signal OPEN_PORTS_NEXT        : std_logic_vector(4 downto 0)   := (others => '1'
      
 signal SRC_ADDR_REG           : std_logic_vector(15 downto 0)  := (others => '0');
 signal SRC_ADDR_NEXT          : std_logic_vector(15 downto 0)  := (others => '0');
-     
+
+signal SRC_PORT_REG           : std_logic_vector(04 downto 0)  := (others => '0');
+signal SRC_PORT_NEXT           : std_logic_vector(04 downto 0) := (others => '0');
+
 signal DEST_ADDR_REG          : std_logic_vector(15 downto 0)  := (others => '0');
 signal DEST_ADDR_NEXT         : std_logic_vector(15 downto 0)  := (others => '0');
      
@@ -48,8 +51,8 @@ signal SEQ_NUM_NEXT           : std_logic_vector(31 downto 0)  := (others => '0'
 signal EXPECTED_SEQ_NUM_REG   : std_logic_vector(31 downto 0)  := (others => '0');
 signal EXPECTED_SEQ_NUM_NEXT  : std_logic_vector(31 downto 0)  := (others => '0');
 
-signal FLAG_REG        : std_logic_vector(7 downto 0)   := (others => '0');
-signal FLAG_NEXT       : std_logic_vector(7 downto 0)   := (others => '0');
+signal FLAG_REG               : std_logic_vector(7 downto 0)   := (others => '0');
+signal FLAG_NEXT              : std_logic_vector(7 downto 0)   := (others => '0');
 
 -- registradores de memória
 signal r_SEQ_NUM_REG,  r_SEQ_NUM_NEXT : std_logic_vector(159 downto 0) := (others => '0');
@@ -61,7 +64,14 @@ signal SYNC_CLOSE_ERROR_REG, sync_CLOSE_ERROR_NEXT : std_logic := '0';
 signal SYNC_ERROR_REG, SYNC_ERROR_NEXT : std_logic := '0';
 signal CLOSE_ERROR_REG, CLOSE_ERROR_NEXT : std_logic := '0';
 signal DEST_ADDR_ERROR_REG, DEST_ADDR_ERROR_NEXT : std_logic := '0';
+signal estado : std_logic_vector(2 downto 0);
 begin
+
+    estado <= "000" when STATE_REG = START else
+              "000" when STATE_REG = SEQ_NUM_CAPTURE else
+              "000" when STATE_REG = FLAG_CAPTURE else
+              "000" when STATE_REG = SRC_ADDR_CAPTURE else
+              "000" when STATE_REG = DEST_ADDR_CAPTURE;
 
     -- processo de atualização de estados
     process(i_port_clock_controller)
@@ -72,6 +82,7 @@ begin
             OPEN_PORTS_REG        <= OPEN_PORTS_NEXT;
             FLAG_REG              <= FLAG_NEXT;
             SRC_ADDR_REG          <= SRC_ADDR_NEXT;
+            SRC_PORT_REG          <= SRC_PORT_NEXT;
             DEST_ADDR_REG         <= DEST_ADDR_NEXT;
             SEQ_NUM_REG           <= SEQ_NUM_NEXT;
             DEST_PORT_REG         <= DEST_PORT_NEXT;
@@ -125,7 +136,7 @@ begin
     end process;
                   
     -- operações de estado
-    process(STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG, EXPECTED_SEQ_NUM_REG)
+    process(STATE_REG, OPEN_PORTS_REG, SRC_ADDR_REG, DEST_ADDR_REG, SEQ_NUM_REG, FLAG_REG, r_SEQ_NUM_REG, r_SRC_ADDR_REG, SEQ_NUM_ERROR_REG, SYNC_CLOSE_ERROR_REG, SYNC_ERROR_REG, CLOSE_ERROR_REG, EXPECTED_SEQ_NUM_REG, SRC_PORT_REG)
     begin
         OPEN_PORTS_NEXT       <= OPEN_PORTS_REG;
         FLAG_NEXT             <= FLAG_REG;
@@ -166,6 +177,7 @@ begin
             -- captura do source address
             when SRC_ADDR_CAPTURE  =>
                 SRC_ADDR_NEXT <= i_src_addr;
+                SRC_PORT_NEXT <= i_src_port;
 
             -- captura do destination address
             when DEST_ADDR_CAPTURE =>
@@ -180,12 +192,12 @@ begin
 
                 -- tratamento de mensagem de sincronização
                 if((FLAG_REG(7) = '1') and (FLAG_REG(0) = '0')) then
-                    if(((i_src_port and OPEN_PORTS_REG) = "00000")) then
+                    if(((SRC_PORT_REG and OPEN_PORTS_REG) = "00000")) then
                         SYNC_ERROR_NEXT <= '1';
                     else
                         SYNC_ERROR_NEXT <= '0';
-                        OPEN_PORTS_NEXT <= OPEN_PORTS_REG and (not i_src_port);
-                        case i_src_port is
+                        OPEN_PORTS_NEXT <= OPEN_PORTS_REG and (not SRC_PORT_REG);
+                        case SRC_PORT_REG is
                             when "00001" => 
                                 r_SRC_ADDR_NEXT(15 downto 00)  <= SRC_ADDR_NEXT;
                                 r_SEQ_NUM_NEXT(31 downto 00)   <= SEQ_NUM_NEXT; 
@@ -206,8 +218,8 @@ begin
                     end if;
 
                 -- se for mensagem de payload ou fechamento o seq_num será analisado
-                elsif((FLAG_REG(7) = '0') and ((i_src_port and OPEN_PORTS_REG) = "00000")) then
-                    case i_src_port is
+                elsif((FLAG_REG(7) = '0') and ((SRC_PORT_REG and OPEN_PORTS_REG) = "00000")) then
+                    case SRC_PORT_REG is
                         when "00001" => 
                             r_SEQ_NUM_NEXT(31 downto 00) <= SEQ_NUM_NEXT; 
                             if(not(unsigned(SEQ_NUM_REG) = unsigned(unsigned(r_SEQ_NUM_REG(31 downto 00)) + 1))) then
@@ -246,17 +258,17 @@ begin
 
                 -- tratamento de mensagem de fechamento
                 if(FLAG_REG(7) = '0' and FLAG_REG(0) = '1') then
-                    if(not((i_src_port and OPEN_PORTS_REG) = "00000")) then 
+                    if(not((SRC_PORT_REG and OPEN_PORTS_REG) = "00000")) then 
                         CLOSE_ERROR_NEXT <= '1';
                         OPEN_PORTS_NEXT <= OPEN_PORTS_REG;
                     else
                         CLOSE_ERROR_NEXT <= '0';
-                        OPEN_PORTS_NEXT <= OPEN_PORTS_REG or i_src_port;
+                        OPEN_PORTS_NEXT <= OPEN_PORTS_REG or SRC_PORT_REG;
                     end if;
                 end if;
                 
                 -- caso em que não se trata de mensagem de sincronização ou fechamento
-                if(not(FLAG_REG(7) = '1' or FLAG_REG(0) = '1') and ((i_src_port and OPEN_PORTS_REG) = "00000")) then
+                if(not(FLAG_REG(7) = '1' or FLAG_REG(0) = '1') and ((SRC_PORT_REG and OPEN_PORTS_REG) = "00000")) then
                     -- destination address not found error 
                     if   (i_dest_addr = r_SRC_ADDR_REG(15 downto 00) and OPEN_PORTS_REG(0) = '0') then
                         DEST_PORT_NEXT <= "00001"; 

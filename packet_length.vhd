@@ -73,6 +73,7 @@ begin
             when FINISHED =>
                 if (unsigned(COUNTER_REG) = unsigned(4 * unsigned(i_received_packet_length)) - 1) then
                     PACKET_LENGTH_ERROR_NEXT <= '0';
+                    CALC_PACKET_LENGTH_NEXT <= COUNTER_REG;
                 else
                     PACKET_LENGTH_ERROR_NEXT <= '1';
                     CALC_PACKET_LENGTH_NEXT <= COUNTER_REG;
@@ -82,8 +83,6 @@ begin
             when others =>
         end case;
     end process;
-
-
 
     o_packet_length_error <= PACKET_LENGTH_ERROR_NEXT;
     o_calc_packet_length  <= CALC_PACKET_LENGTH_NEXT;

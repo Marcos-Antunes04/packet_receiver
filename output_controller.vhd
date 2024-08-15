@@ -30,8 +30,8 @@ type state_type is (IDLE, START, EXEC);
 signal STATE_REG                        : state_type := IDLE; -- por padrão o estado começa como idle
 signal STATE_NEXT                       : state_type;
 
-signal FLAGS_REG                        : std_logic_vector(06 downto 0);
-signal FLAGS_NEXT                       : std_logic_vector(06 downto 0);
+signal FLAGS_REG                        : std_logic_vector(06 downto 0) := (others => '0');
+signal FLAGS_NEXT                       : std_logic_vector(06 downto 0) := (others => '0');
 
 signal CALC_CHECKSUM_REG                : std_logic_vector(15 downto 0) := (others => '0');
 signal CALC_CHECKSUM_NEXT               : std_logic_vector(15 downto 0) := (others => '0');
@@ -47,7 +47,6 @@ signal PACKET_LENGTH_NEXT               : std_logic_vector(15 downto 0) := (othe
 
 signal CTRL_REG                         : std_logic_vector(03 downto 0) := (others => '0');
 signal CTRL_NEXT                        : std_logic_vector(03 downto 0) := (others => '0');
-
 
 signal w_master_valid                   : std_logic := '0';
 signal w_master_last                    : std_logic := '0';
@@ -96,7 +95,7 @@ begin
         end case;
     end process;
 
-    process(STATE_REG, FLAGS_REG, CALC_CHECKSUM_REG, DEST_ADDR_REG, SEQ_NUM_EXPECTED_REG, PACKET_LENGTH_REG, S_AXIS_T_LAST, i_flag)
+    process(STATE_REG, FLAGS_REG, CALC_CHECKSUM_REG, DEST_ADDR_REG, SEQ_NUM_EXPECTED_REG, PACKET_LENGTH_REG, S_AXIS_T_LAST, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected)
     begin
         -- Default values
         CTRL_NEXT <= CTRL_REG;
