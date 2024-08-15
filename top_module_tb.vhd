@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
 entity tb_top_module is
 end tb_top_module;
 
@@ -12,8 +11,8 @@ architecture behavior of tb_top_module is
         signal S_AXIS_T_READY                  : std_logic := '0';
         signal S_AXIS_T_DATA                   : std_logic_vector(7 downto 0) := (others => '0');
         signal i_src_port                      : std_logic_vector(4 downto 0) := (others => '0');
-        signal M_AXIS_TLAST                   : std_logic := '0';
-        signal M_AXIS_TDATA                   : std_logic_vector(7 downto 0)  := (others => '0');
+        signal M_AXIS_TLAST                    : std_logic := '0';
+        signal M_AXIS_TDATA                    : std_logic_vector(7 downto 0)  := (others => '0');
         signal master_o_dest_port              : std_logic_vector(04 downto 0) := (others => '0');
         signal master_o_dest_addr              : std_logic_vector(15 downto 0) := (others => '0');
         signal M_AXIS_TREADY : std_logic      := '0';
@@ -30,10 +29,10 @@ architecture behavior of tb_top_module is
         S_AXIS_T_READY                  : out std_logic;
         S_AXIS_T_DATA                   : in  std_logic_vector(7 downto 0);
         i_src_port                      : in  std_logic_vector(4 downto 0);
-        M_AXIS_TREADY                  : in  std_logic;
-        M_AXIS_TVALID                  : out std_logic;
-        M_AXIS_TDATA                   : out std_logic_vector(7 downto 0);
-        M_AXIS_TLAST                   : out std_logic := '0';
+        M_AXIS_TREADY                   : in  std_logic;
+        M_AXIS_TVALID                   : out std_logic;
+        M_AXIS_TDATA                    : out std_logic_vector(7 downto 0);
+        M_AXIS_TLAST                    : out std_logic := '0';
         master_o_dest_port              : out std_logic_vector(04 downto 0);
         master_o_dest_addr              : out std_logic_vector(15 downto 0);
         master_o_flags                  : out std_logic_vector(06 downto 0)
@@ -63,7 +62,6 @@ architecture behavior of tb_top_module is
         clk <= '0';
         last <= '0';
     end procedure clock_cycle_with_last_data;
-
 
 begin
     master_module: top_module
@@ -177,7 +175,7 @@ begin
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
-           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"02");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"03");
 
            -- clpr
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00"); -- flag
@@ -209,6 +207,22 @@ begin
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"6C");
            clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"64");
            clock_cycle_with_last_data(slave_i_clk, S_AXIS_T_LAST, S_AXIS_T_DATA , X"21");
+
+           wait for 10 ns;    
+
+           M_AXIS_TREADY <= '1';
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           clock_cycle_with_data(slave_i_clk, S_AXIS_T_DATA , X"00");
+           M_AXIS_TREADY <= '0';
+
 
            wait for 5 ns;
            wait for 5 ns;
