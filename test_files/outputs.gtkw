@@ -1,21 +1,23 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Thu Aug 15 23:33:24 2024
+[*] Fri Aug 16 19:23:18 2024
 [*]
-[dumpfile] "/home/marcos/Desktop/receiver/top_module.vcd"
-[dumpfile_mtime] "Thu Aug 15 23:31:09 2024"
-[dumpfile_size] 205013
-[savefile] "/home/marcos/Desktop/receiver/test_files/outputs.gtkw"
-[timestart] 193100000
-[size] 1870 1016
-[pos] -51 -51
-*-25.000000 253400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[dumpfile] "/home/marcos/my_repo/top_module.vcd"
+[dumpfile_mtime] "Fri Aug 16 19:16:26 2024"
+[dumpfile_size] 205191
+[savefile] "/home/marcos/my_repo/test_files/outputs.gtkw"
+[timestart] 279670000
+[size] 1908 987
+[pos] -516 -93
+*-23.000000 305960000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb_top_module.
 [treeopen] tb_top_module.master_module.
 [sst_width] 233
-[signals_width] 174
+[signals_width] 242
 [sst_expanded] 1
-[sst_vpaned_height] 289
+[sst_vpaned_height] 549
+@28
+tb_top_module.master_module.module_output_controller.m_axis_tready
 @22
 tb_top_module.master_module.s_axis_t_data[7:0]
 @28
@@ -26,7 +28,13 @@ tb_top_module.master_module.s_axis_t_last
 tb_top_module.master_module.module_output_controller.m_axis_tdata[7:0]
 @28
 tb_top_module.master_module.m_axis_tlast
-@25
+@29
+tb_top_module.master_module.module_output_controller.m_axis_tvalid
+@24
 tb_top_module.master_module.module_output_controller.estado[1:0]
+@22
+tb_top_module.master_module.module_output_controller.ctrl_reg[3:0]
+@28
+tb_top_module.master_module.module_output_controller.flags_reg[6:0]
 [pattern_trace] 1
 [pattern_trace] 0
