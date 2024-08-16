@@ -95,6 +95,10 @@ begin
                     STATE_NEXT <= START;
                 end if;
 
+                if(M_AXIS_TREADY = '0') then
+                    STATE_NEXT <= IDLE;
+                end if;
+
                 case CTRL_REG is
                     when "0001" =>
                         if   (FLAGS_REG(1) = '1') then 
@@ -125,12 +129,13 @@ begin
     process(STATE_REG,CTRL_REG, FLAGS_REG, CALC_CHECKSUM_REG, DEST_ADDR_REG, SEQ_NUM_EXPECTED_REG, PACKET_LENGTH_REG, S_AXIS_T_LAST, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected, M_AXIS_TREADY, slave_i_clk)
     begin
         -- Default values
-        CTRL_NEXT <= CTRL_REG;
+        CTRL_NEXT             <= CTRL_REG;
         
         case STATE_REG is
             when idle =>
                 w_master_valid <= '0';
                 w_master_last  <= '0';
+                w_master_data  <= (others => '0');
 
                 if   (FLAGS_REG(0) = '1') then -- packet_length error
                     CTRL_NEXT <= "0000";
@@ -146,6 +151,16 @@ begin
                 w_master_valid <= '0';
                 w_master_last  <= '0';
 
+                if   (FLAGS_NEXT(0) = '1') then -- packet_length error
+                    CTRL_NEXT <= "0000";
+                elsif(FLAGS_NEXT(1) = '1') then -- checksum error
+                    CTRL_NEXT <= "0010";
+                elsif(FLAGS_NEXT(2) = '1') then -- seq_num error
+                    CTRL_NEXT <= "0100";
+                elsif(FLAGS_NEXT(3) = '1') then -- destination address not found
+                    CTRL_NEXT <= "1000";
+                end if; 
+
                 if(S_AXIS_T_LAST = '1') then
                     -- Esses sinais não podem receber atribuião padrão no início do process
                     FLAGS_NEXT            <= i_flag;
@@ -157,7 +172,6 @@ begin
                     if(M_AXIS_TREADY = '1') then
                         w_master_valid <= '1';
                     end if;
-
                 end if;
 
             when EXEC =>
@@ -187,6 +201,7 @@ begin
                             if(slave_i_clk = '0') then
                                 w_master_valid <= '0';
                                 w_master_last  <= '0';
+                                w_master_data  <= (others => '0');
                             end if;
                         end if; 
 
@@ -209,6 +224,7 @@ begin
                             if(slave_i_clk = '0') then
                                 w_master_valid <= '0';
                                 w_master_last  <= '0';
+                                w_master_data  <= (others => '0');
                             end if;
                         end if; 
 
@@ -239,8 +255,10 @@ begin
                             if(slave_i_clk = '0') then
                                 w_master_valid <= '0';
                                 w_master_last  <= '0';
+                                w_master_data  <= (others => '0');
                             end if;
                         end if; 
+
                     when "1000" => -- dest_addr 1
                         if(M_AXIS_TREADY = '1') then
                             w_master_data <= DEST_ADDR_REG(15 downto 8);
@@ -254,6 +272,7 @@ begin
                         if(slave_i_clk = '0') then
                             w_master_valid <= '0';
                                 w_master_last  <= '0';
+                                w_master_data  <= (others => '0');
                         end if;
 
                     when others =>
