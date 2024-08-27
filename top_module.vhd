@@ -5,20 +5,20 @@ use ieee.numeric_std.all;
 entity top_module is
     port(
         -- slave interface ports
-        slave_i_clk : in std_logic;
-        S_AXIS_T_VALID : in std_logic;
-        S_AXIS_T_LAST : in std_logic;
-        S_AXIS_T_READY : out std_logic;
-        S_AXIS_T_DATA : in std_logic_vector(7 downto 0);
-        i_src_port : in std_logic_vector(4 downto 0);
+        slave_i_clk        : in std_logic;
+        S_AXIS_T_VALID     : in std_logic;
+        S_AXIS_T_LAST      : in std_logic;
+        S_AXIS_T_READY     : out std_logic;
+        S_AXIS_T_DATA      : in std_logic_vector(7 downto 0);
+        i_src_port         : in std_logic_vector(4 downto 0);
 
         -- master interface ports
         
-        M_AXIS_TREADY : in  std_logic;
-        M_AXIS_TVALID : out std_logic;
-        M_AXIS_TLAST  : out std_logic;
-        M_AXIS_TDATA  : out std_logic_vector(7 downto 0);
-        master_o_flags : out std_logic_vector(6 downto 0);
+        M_AXIS_TREADY      : in  std_logic;
+        M_AXIS_TVALID      : out std_logic;
+        M_AXIS_TLAST       : out std_logic;
+        M_AXIS_TDATA       : out std_logic_vector(7 downto 0);
+        master_o_flags     : out std_logic_vector(6 downto 0);
 
         master_o_dest_port : out std_logic_vector(04 downto 0);
         master_o_dest_addr : out std_logic_vector(15 downto 0)
@@ -106,11 +106,11 @@ architecture behavioral of top_module is
         -- output ports
         o_dest_port                   : out std_logic_vector(04 downto 0) := (others => '0');
         o_dest_addr                   : out std_logic_vector(15 downto 0) := (others => '0');
-        seq_num_error                 : out std_logic := '0';
-        dest_addr_error               : out std_logic := '0';
-        sync_error                    : out std_logic := '0';
-        close_error                   : out std_logic := '0';
-        sync_close_error              : out std_logic := '0';
+        o_seq_num_error               : out std_logic := '0';
+        o_dest_addr_error             : out std_logic := '0';
+        o_sync_error                  : out std_logic := '0';
+        o_close_error                 : out std_logic := '0';
+        o_sync_close_error            : out std_logic := '0';
         o_expected_seq_num            : out std_logic_vector(31 downto 0)
     );
     end component;
@@ -125,10 +125,10 @@ architecture behavioral of top_module is
         i_seq_num_expected         : in  std_logic_vector(31 downto 0); -- 4 clock cycles
         i_packet_length_expected   : in  std_logic_vector(15 downto 0); -- 2 clock cycles
         i_dest_port                : in  std_logic_vector(04 downto 0);
-        M_AXIS_TREADY             : in  std_logic;
-        M_AXIS_TVALID             : out std_logic;
-        M_AXIS_TLAST              : out std_logic;
-        M_AXIS_TDATA              : out std_logic_vector(07 downto 0);
+        M_AXIS_TREADY              : in  std_logic;
+        M_AXIS_TVALID              : out std_logic;
+        M_AXIS_TLAST               : out std_logic;
+        M_AXIS_TDATA               : out std_logic_vector(07 downto 0);
         master_o_dest_port         : out std_logic_vector(04 downto 0);
         master_o_dest_addr         : out std_logic_vector(15 downto 0);
         master_o_flags             : out std_logic_vector(06 downto 0)
@@ -189,31 +189,31 @@ begin
         i_src_port               => i_src_port,
         o_dest_addr              => o_dest_addr,
         o_dest_port              => o_dest_port,
-        seq_num_error            => seq_num_error,
-        dest_addr_error          => dest_addr_not_found,
-        sync_error               => sync_error,
-        close_error              => close_error,
-        sync_close_error         => sync_close_error,
+        o_seq_num_error          => seq_num_error,
+        o_dest_addr_error        => dest_addr_not_found,
+        o_sync_error             => sync_error,
+        o_close_error            => close_error,
+        o_sync_close_error       => sync_close_error,
         o_expected_seq_num       => w_expected_seq_num
     );
 
     module_output_controller: output_controller
     port map (        
-            slave_i_clk => slave_i_clk,
-            S_AXIS_T_LAST => S_AXIS_T_LAST,
-            i_flag => flags,
-            i_calc_checksum => o_calc_checksum,
-            i_dest_addr => o_dest_addr,
-            i_seq_num_expected => w_expected_seq_num,
+            slave_i_clk              => slave_i_clk,
+            S_AXIS_T_LAST            => S_AXIS_T_LAST,
+            i_flag                   => flags,
+            i_calc_checksum          => o_calc_checksum,
+            i_dest_addr              => o_dest_addr,
+            i_seq_num_expected       => w_expected_seq_num,
             i_packet_length_expected => w_calc_packet_lenght,
-            i_dest_port => o_dest_port,
-            M_AXIS_TREADY => M_AXIS_TREADY,
-            M_AXIS_TVALID => M_AXIS_TVALID,
-            M_AXIS_TLAST => M_AXIS_TLAST,
-            M_AXIS_TDATA => M_AXIS_TDATA,
-            master_o_dest_port => master_o_dest_port,
-            master_o_dest_addr => master_o_dest_addr,
-            master_o_flags => master_o_flags
+            i_dest_port              => o_dest_port,
+            M_AXIS_TREADY            => M_AXIS_TREADY,
+            M_AXIS_TVALID            => M_AXIS_TVALID,
+            M_AXIS_TLAST             => M_AXIS_TLAST,
+            M_AXIS_TDATA             => M_AXIS_TDATA,
+            master_o_dest_port       => master_o_dest_port,
+            master_o_dest_addr       => master_o_dest_addr,
+            master_o_flags           => master_o_flags
         );
 
     S_AXIS_T_READY <= w_ready;

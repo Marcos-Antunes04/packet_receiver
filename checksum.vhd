@@ -17,59 +17,59 @@ entity checksum is
 end checksum;
 
 architecture behavioral of checksum is
-type state_type is (EXEC, FINISHED);
-signal STATE_REG         : state_type := EXEC; -- por padrão o estado começa como most significant
-signal STATE_NEXT        : state_type;
+type t_state_type is (EXEC, FINISHED);
+signal state_reg         : t_state_type := EXEC; -- por padrão o estado começa como most significant
+signal state_next        : t_state_type;
 
-signal CHECK_VALUE_REG     : std_logic_vector(31 downto 0) := (others => '0');
-signal CHECK_VALUE_NEXT    : std_logic_vector(31 downto 0) := (others => '0');
+signal check_value_reg     : std_logic_vector(31 downto 0) := (others => '0');
+signal check_value_next    : std_logic_vector(31 downto 0) := (others => '0');
 
-signal CHECK_ERROR_REG     : std_logic := '0';
-signal CHECK_ERROR_NEXT    : std_logic := '0';
+signal check_error_reg     : std_logic := '0';
+signal check_error_next    : std_logic := '0';
 
-signal CHECK_INTERMED_REG  : std_logic_vector(7 downto 0) := (others => '0');
-signal CHECK_INTERMED_NEXT : std_logic_vector(7 downto 0) := (others => '0');
+signal check_intermed_reg  : std_logic_vector(7 downto 0) := (others => '0');
+signal check_intermed_next : std_logic_vector(7 downto 0) := (others => '0');
 
-signal CHECK_CALC_REG      : std_logic_vector(31 downto 0) := (others => '0');
-signal CHECK_CALC_NEXT     : std_logic_vector(31 downto 0) := (others => '0');
+signal check_calc_reg      : std_logic_vector(31 downto 0) := (others => '0');
+signal check_calc_next     : std_logic_vector(31 downto 0) := (others => '0');
 
-signal CTRL_REG            : std_logic := '0';
-signal CTRL_NEXT           : std_logic := '0';
+signal ctrl_reg            : std_logic := '0';
+signal ctrl_next           : std_logic := '0';
 
 begin
     -- atualização de estado
     clk_process: process(i_clk)
     begin
         if(rising_edge(i_clk)) then
-            STATE_REG        <= STATE_NEXT       ;
-            CHECK_VALUE_REG    <= CHECK_VALUE_NEXT   ;
-            CHECK_ERROR_REG    <= CHECK_ERROR_NEXT   ;
-            CHECK_INTERMED_REG <= CHECK_INTERMED_NEXT;
-            CHECK_CALC_REG     <= CHECK_CALC_NEXT    ;
-            CTRL_REG           <= CTRL_NEXT          ;
+            state_reg        <= state_next       ;
+            check_value_reg    <= check_value_next   ;
+            check_error_reg    <= check_error_next   ;
+            check_intermed_reg <= check_intermed_next;
+            check_calc_reg     <= check_calc_next    ;
+            ctrl_reg           <= ctrl_next          ;
         end if;
     end process;
 
     -- lógica de próximo estado
-    next_state: process(STATE_REG, CTRL_REG, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
+    next_state: process(state_reg, ctrl_reg, S_AXIS_T_VALID, S_AXIS_T_READY, S_AXIS_T_LAST)
     begin
         -- default value
-        STATE_NEXT <= STATE_REG;
-        CTRL_NEXT    <= CTRL_REG;
+        state_next <= state_reg;
+        ctrl_next    <= ctrl_reg;
 
-        case(STATE_REG) is
+        case(state_reg) is
             when EXEC =>
                 if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' then
-                    CTRL_NEXT <= not CTRL_REG;
+                    ctrl_next <= not ctrl_reg;
                     if(S_AXIS_T_LAST = '1') then
-                        STATE_NEXT <= FINISHED;
+                        state_next <= FINISHED;
                     end if;
                 end if;
 
             when FINISHED =>
                 if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1'then
-                        STATE_NEXT <= EXEC;
-                        CTRL_NEXT <= '1';
+                        state_next <= EXEC;
+                        ctrl_next <= '1';
                 end if;
 
             when others =>
@@ -78,62 +78,62 @@ begin
 
 
     
-    datapath: process(STATE_REG,CHECK_VALUE_REG,CHECK_INTERMED_REG, CHECK_CALC_REG, CHECK_ERROR_REG, CTRL_REG, S_AXIS_T_DATA, i_received_checksum, S_AXIS_T_LAST)
+    datapath: process(state_reg,check_value_reg,check_intermed_reg, check_calc_reg, check_error_reg, ctrl_reg, S_AXIS_T_DATA, i_received_checksum, S_AXIS_T_LAST)
     begin
         -- default values
-        CHECK_ERROR_NEXT    <= CHECK_ERROR_REG;
-        CHECK_INTERMED_NEXT <= CHECK_INTERMED_REG;
-        CHECK_VALUE_NEXT    <= CHECK_VALUE_REG;
-        CHECK_CALC_NEXT     <= CHECK_CALC_REG;
+        check_error_next    <= check_error_reg;
+        check_intermed_next <= check_intermed_reg;
+        check_value_next    <= check_value_reg;
+        check_calc_next     <= check_calc_reg;
 
-        case(STATE_REG) is
+        case(state_reg) is
             when EXEC =>
-                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and CTRL_REG = '0' then
-                    CHECK_INTERMED_NEXT <= S_AXIS_T_DATA;
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and ctrl_reg = '0' then
+                    check_intermed_next <= S_AXIS_T_DATA;
                     if(S_AXIS_T_LAST = '1') then
-                        CHECK_CALC_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG)  + unsigned(S_AXIS_T_DATA) - unsigned(i_received_checksum));
-                        CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(S_AXIS_T_DATA));
+                        check_calc_next <= std_logic_vector(unsigned(check_value_reg)  + unsigned(S_AXIS_T_DATA) - unsigned(i_received_checksum));
+                        check_value_next <= std_logic_vector(unsigned(check_value_reg) + unsigned(S_AXIS_T_DATA));
                     end if;
                 end if;
 
-                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and CTRL_REG = '1' then
-                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & S_AXIS_T_DATA));
-                    CHECK_CALC_NEXT  <= std_logic_vector(unsigned(CHECK_VALUE_REG) + unsigned(CHECK_INTERMED_REG & S_AXIS_T_DATA) - unsigned(i_received_checksum));
+                if S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1' and ctrl_reg = '1' then
+                    check_value_next <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg & S_AXIS_T_DATA));
+                    check_calc_next  <= std_logic_vector(unsigned(check_value_reg) + unsigned(check_intermed_reg & S_AXIS_T_DATA) - unsigned(i_received_checksum));
                 end if;
             
             when FINISHED =>
-                if((unsigned(CHECK_VALUE_REG) > X"FFFF")) then
-                    CHECK_VALUE_NEXT <= std_logic_vector(unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16)));
-                    if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0)) + unsigned(X"0000" & CHECK_VALUE_REG(31 downto 16))) = X"0000FFFF") then
-                        CHECK_ERROR_NEXT <= '0';
+                if((unsigned(check_value_reg) > X"FFFF")) then
+                    check_value_next <= std_logic_vector(unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16)));
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0)) + unsigned(X"0000" & check_value_reg(31 downto 16))) = X"0000FFFF") then
+                        check_error_next <= '0';
                     else
-                        CHECK_ERROR_NEXT <= '1';
+                        check_error_next <= '1';
                     end if;
                 else
-                    if((unsigned(X"0000" & CHECK_VALUE_REG(15 downto 0))) = X"0000FFFF") then
-                        CHECK_ERROR_NEXT <= '0';
+                    if((unsigned(X"0000" & check_value_reg(15 downto 0))) = X"0000FFFF") then
+                        check_error_next <= '0';
                     else
-                        CHECK_ERROR_NEXT <= '1';
+                        check_error_next <= '1';
                     end if;
                 end if;
 
-                if((unsigned(CHECK_CALC_REG) > X"FFFF")) then
-                    CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(X"0000" & CHECK_CALC_REG(15 downto 0)) + unsigned(X"0000" & CHECK_CALC_REG(31 downto 16))));
+                if((unsigned(check_calc_reg) > X"FFFF")) then
+                    check_calc_next <= not(std_logic_vector(unsigned(X"0000" & check_calc_reg(15 downto 0)) + unsigned(X"0000" & check_calc_reg(31 downto 16))));
                 else
-                    CHECK_CALC_NEXT <= not(std_logic_vector(unsigned(CHECK_CALC_REG)));
+                    check_calc_next <= not(std_logic_vector(unsigned(check_calc_reg)));
                 end if;
 
                 if(S_AXIS_T_LAST = '0') then
-                    CHECK_VALUE_NEXT    <= (others => '0');
-                    CHECK_ERROR_NEXT    <= '0';
-                    CHECK_INTERMED_NEXT <= (others => '0');
-                    CHECK_CALC_NEXT     <= (others => '0');
+                    check_value_next    <= (others => '0');
+                    check_error_next    <= '0';
+                    check_intermed_next <= (others => '0');
+                    check_calc_next     <= (others => '0');
                 end if;               
             when others =>
         end case;
     end process;
 
-    o_checksum_error <= CHECK_ERROR_NEXT;
-    o_calc_checksum <= CHECK_CALC_NEXT(15 downto 0);
+    o_checksum_error <= check_error_next;
+    o_calc_checksum <= check_calc_next(15 downto 0);
 
 end behavioral;

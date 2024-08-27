@@ -26,148 +26,142 @@ entity output_controller is
 end output_controller;
 
 architecture behavioral of output_controller is
-type state_type is (IDLE, START, EXEC);
-signal STATE_REG                        : state_type := IDLE; -- por padrão o estado começa como idle
-signal STATE_NEXT                       : state_type;
+type t_state_type is (IDLE, START, EXEC);
+signal state_reg                        : t_state_type := IDLE; -- por padrão o estado começa como idle
+signal state_next                       : t_state_type;
 
-signal FLAGS_REG                        : std_logic_vector(06 downto 0) := (others => '0');
-signal FLAGS_NEXT                       : std_logic_vector(06 downto 0) := (others => '0');
+signal flags_reg                        : std_logic_vector(06 downto 0) := (others => '0');
+signal flags_next                       : std_logic_vector(06 downto 0) := (others => '0');
 
-signal CALC_CHECKSUM_REG                : std_logic_vector(15 downto 0) := (others => '0');
-signal CALC_CHECKSUM_NEXT               : std_logic_vector(15 downto 0) := (others => '0');
+signal calc_checksum_reg                : std_logic_vector(15 downto 0) := (others => '0');
+signal calc_checksum_next               : std_logic_vector(15 downto 0) := (others => '0');
 
-signal DEST_ADDR_REG                    : std_logic_vector(15 downto 0) := (others => '0');
-signal DEST_ADDR_NEXT                   : std_logic_vector(15 downto 0) := (others => '0');
+signal dest_addr_reg                    : std_logic_vector(15 downto 0) := (others => '0');
+signal dest_addr_next                   : std_logic_vector(15 downto 0) := (others => '0');
 
-signal SEQ_NUM_EXPECTED_REG             : std_logic_vector(31 downto 0) := (others => '0');
-signal SEQ_NUM_EXPECTED_NEXT            : std_logic_vector(31 downto 0) := (others => '0');
+signal seq_num_expected_reg             : std_logic_vector(31 downto 0) := (others => '0');
+signal seq_num_expected_next            : std_logic_vector(31 downto 0) := (others => '0');
 
-signal PACKET_LENGTH_REG                : std_logic_vector(15 downto 0) := (others => '0');
-signal PACKET_LENGTH_NEXT               : std_logic_vector(15 downto 0) := (others => '0');
+signal packet_length_reg                : std_logic_vector(15 downto 0) := (others => '0');
+signal packet_length_next               : std_logic_vector(15 downto 0) := (others => '0');
 
-signal CTRL_REG                         : std_logic_vector(03 downto 0) := (others => '0');
-signal CTRL_NEXT                        : std_logic_vector(03 downto 0) := (others => '0');
+signal ctrl_reg                         : std_logic_vector(03 downto 0) := (others => '0');
+signal ctrl_next                        : std_logic_vector(03 downto 0) := (others => '0');
 
 signal w_master_valid                   : std_logic := '0';
 signal w_master_last                    : std_logic := '0';
 signal w_master_data                    : std_logic_vector(07 downto 0) := (others => '0');
 
-signal estado : std_logic_vector(1 downto 0);
-
 begin
-
-    estado <= "00" when STATE_REG = IDLE else
-              "01" when STATE_REG = START else
-              "10" when STATE_REG = EXEC;
 
     process(slave_i_clk)
     begin
         if(rising_edge(slave_i_clk)) then
-            STATE_REG            <= STATE_NEXT;
-            FLAGS_REG            <= FLAGS_NEXT;
-            CALC_CHECKSUM_REG    <= CALC_CHECKSUM_NEXT;
-            DEST_ADDR_REG        <= DEST_ADDR_NEXT;
-            SEQ_NUM_EXPECTED_REG <= SEQ_NUM_EXPECTED_NEXT;
-            PACKET_LENGTH_REG    <= PACKET_LENGTH_NEXT;
-            CTRL_REG             <= CTRL_NEXT;
+            state_reg            <= state_next;
+            flags_reg            <= flags_next;
+            calc_checksum_reg    <= calc_checksum_next;
+            dest_addr_reg        <= dest_addr_next;
+            seq_num_expected_reg <= seq_num_expected_next;
+            packet_length_reg    <= packet_length_next;
+            ctrl_reg             <= ctrl_next;
         end if;
     end process;
 
-    process(STATE_REG, CTRL_REG, FLAGS_REG, S_AXIS_T_LAST, M_AXIS_TREADY)
+    process(state_reg, ctrl_reg, flags_reg, S_AXIS_T_LAST, M_AXIS_TREADY)
     begin
         -- default value
-        STATE_NEXT <= STATE_REG;
-        case STATE_REG is
+        state_next <= state_reg;
+        case state_reg is
             when IDLE =>
                 if(S_AXIS_T_LAST = '1') then
-                    STATE_NEXT <= START;
+                    state_next <= START;
                 elsif(M_AXIS_TREADY = '1') then
-                    STATE_NEXT <= EXEC;
+                    state_next <= EXEC;
                 end if;
             when START =>
                 if(M_AXIS_TREADY = '1') then
-                    STATE_NEXT <= EXEC;
+                    state_next <= EXEC;
                 else
-                    STATE_NEXT <= IDLE;
+                    state_next <= IDLE;
                 end if;
             when EXEC =>
                 if(S_AXIS_T_LAST = '1') then
-                    STATE_NEXT <= START;
+                    state_next <= START;
                 end if;
 
                 if(M_AXIS_TREADY = '0') then
-                    STATE_NEXT <= IDLE;
+                    state_next <= IDLE;
                 end if;
 
-                case CTRL_REG is
+                case ctrl_reg is
                     when "0001" =>
-                        if   (FLAGS_REG(1) = '1') then 
-                        elsif(FLAGS_REG(2) = '1') then 
-                        elsif(FLAGS_REG(3) = '1') then
+                        if   (flags_reg(1) = '1') then 
+                        elsif(flags_reg(2) = '1') then 
+                        elsif(flags_reg(3) = '1') then
                         else
-                            STATE_NEXT <= IDLE;
+                            state_next <= IDLE;
                         end if; 
                     when "0011" =>
-                        if   (FLAGS_REG(2) = '1') then 
-                        elsif(FLAGS_REG(3) = '1') then
+                        if   (flags_reg(2) = '1') then 
+                        elsif(flags_reg(3) = '1') then
                         else
-                            STATE_NEXT <= IDLE;
+                            state_next <= IDLE;
                         end if; 
                     when "0111" =>
-                        if   (FLAGS_REG(3) = '1') then
+                        if   (flags_reg(3) = '1') then
                         else
-                            STATE_NEXT <= IDLE;
+                            state_next <= IDLE;
                         end if; 
                     when "1001" =>
-                        STATE_NEXT <= IDLE;
+                        state_next <= IDLE;
                     when others =>
                 end case;
             when others =>
         end case;
     end process;
 
-    process(STATE_REG,CTRL_REG, FLAGS_REG, CALC_CHECKSUM_REG, DEST_ADDR_REG, SEQ_NUM_EXPECTED_REG, PACKET_LENGTH_REG, S_AXIS_T_LAST, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected, M_AXIS_TREADY, slave_i_clk)
+    process(state_reg,ctrl_reg, flags_reg, calc_checksum_reg, dest_addr_reg, seq_num_expected_reg, packet_length_reg, S_AXIS_T_LAST, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected, M_AXIS_TREADY, slave_i_clk)
     begin
         -- Default values
-        CTRL_NEXT             <= CTRL_REG;
+        ctrl_next             <= ctrl_reg;
         
-        case STATE_REG is
+        case state_reg is
             when idle =>
                 w_master_valid <= '0';
                 w_master_last  <= '0';
                 w_master_data  <= (others => '0');
 
-                if   (FLAGS_REG(0) = '1') then -- packet_length error
-                    CTRL_NEXT <= "0000";
-                elsif(FLAGS_REG(1) = '1') then -- checksum error
-                    CTRL_NEXT <= "0010";
-                elsif(FLAGS_REG(2) = '1') then -- seq_num error
-                    CTRL_NEXT <= "0100";
-                elsif(FLAGS_REG(3) = '1') then -- destination address not found
-                    CTRL_NEXT <= "1000";
+                if   (flags_reg(0) = '1') then -- packet_length error
+                    ctrl_next <= "0000";
+                elsif(flags_reg(1) = '1') then -- checksum error
+                    ctrl_next <= "0010";
+                elsif(flags_reg(2) = '1') then -- seq_num error
+                    ctrl_next <= "0100";
+                elsif(flags_reg(3) = '1') then -- destination address not found
+                    ctrl_next <= "1000";
                 end if; 
 
             when START =>
                 w_master_valid <= '0';
                 w_master_last  <= '0';
 
-                if   (FLAGS_NEXT(0) = '1') then -- packet_length error
-                    CTRL_NEXT <= "0000";
-                elsif(FLAGS_NEXT(1) = '1') then -- checksum error
-                    CTRL_NEXT <= "0010";
-                elsif(FLAGS_NEXT(2) = '1') then -- seq_num error
-                    CTRL_NEXT <= "0100";
-                elsif(FLAGS_NEXT(3) = '1') then -- destination address not found
-                    CTRL_NEXT <= "1000";
+                if   (flags_next(0) = '1') then -- packet_length error
+                    ctrl_next <= "0000";
+                elsif(flags_next(1) = '1') then -- checksum error
+                    ctrl_next <= "0010";
+                elsif(flags_next(2) = '1') then -- seq_num error
+                    ctrl_next <= "0100";
+                elsif(flags_next(3) = '1') then -- destination address not found
+                    ctrl_next <= "1000";
                 end if; 
 
                 if(S_AXIS_T_LAST = '1') then
                     -- Esses sinais não podem receber atribuião padrão no início do process
-                    FLAGS_NEXT            <= i_flag;
-                    CALC_CHECKSUM_NEXT    <= i_calc_checksum;
-                    DEST_ADDR_NEXT        <= i_dest_addr;
-                    SEQ_NUM_EXPECTED_NEXT <= i_seq_num_expected;
-                    PACKET_LENGTH_NEXT    <= i_packet_length_expected;
+                    flags_next            <= i_flag;
+                    calc_checksum_next    <= i_calc_checksum;
+                    dest_addr_next        <= i_dest_addr;
+                    seq_num_expected_next <= i_seq_num_expected;
+                    packet_length_next    <= i_packet_length_expected;
 
                     if(M_AXIS_TREADY = '1') then
                         w_master_valid <= '1';
@@ -179,23 +173,23 @@ begin
                 w_master_last  <= '0';
                 w_master_data  <= (others => '0');
 
-                case CTRL_REG is
+                case ctrl_reg is
                     when "0000" => -- packet_length 1
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= PACKET_LENGTH_REG(15 downto 8);
-                            CTRL_NEXT <= "0001";
+                            w_master_data <= packet_length_reg(15 downto 8);
+                            ctrl_next <= "0001";
                         end if;
                     when "0001" => -- packet_length 2
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= PACKET_LENGTH_REG(07 downto 0);
+                            w_master_data <= packet_length_reg(07 downto 0);
                         end if;
 
-                        if   (FLAGS_REG(1) = '1') then -- checksum error
-                            CTRL_NEXT <= "0010";
-                        elsif(FLAGS_REG(2) = '1') then -- seq_num error
-                            CTRL_NEXT <= "0100";
-                        elsif(FLAGS_REG(3) = '1') then -- destination address not found
-                            CTRL_NEXT <= "1000";
+                        if   (flags_reg(1) = '1') then -- checksum error
+                            ctrl_next <= "0010";
+                        elsif(flags_reg(2) = '1') then -- seq_num error
+                            ctrl_next <= "0100";
+                        elsif(flags_reg(3) = '1') then -- destination address not found
+                            ctrl_next <= "1000";
                         else
                             w_master_last <= '1';
                             if(slave_i_clk = '0') then
@@ -207,18 +201,18 @@ begin
 
                     when "0010" => -- checksum 1
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= CALC_CHECKSUM_REG(15 downto 8);
-                            CTRL_NEXT <= "0011";
+                            w_master_data <= calc_checksum_reg(15 downto 8);
+                            ctrl_next <= "0011";
                         end if;
                     when "0011" => -- checksum 2
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= CALC_CHECKSUM_REG(07 downto 0);
+                            w_master_data <= calc_checksum_reg(07 downto 0);
                         end if;
 
-                        if   (FLAGS_REG(2) = '1') then -- seq_num error
-                            CTRL_NEXT <= "0100";
-                        elsif(FLAGS_REG(3) = '1') then -- destination address not found
-                            CTRL_NEXT <= "1000";
+                        if   (flags_reg(2) = '1') then -- seq_num error
+                            ctrl_next <= "0100";
+                        elsif(flags_reg(3) = '1') then -- destination address not found
+                            ctrl_next <= "1000";
                         else
                             w_master_last <= '1';
                             if(slave_i_clk = '0') then
@@ -230,26 +224,26 @@ begin
 
                     when "0100" => -- seq_num 1
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= SEQ_NUM_EXPECTED_REG(31 downto 24);
-                            CTRL_NEXT <= "0101";
+                            w_master_data <= seq_num_expected_reg(31 downto 24);
+                            ctrl_next <= "0101";
                         end if;
                     when "0101" => -- seq_num 2
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= SEQ_NUM_EXPECTED_REG(23 downto 16);
-                            CTRL_NEXT <= "0110";
+                            w_master_data <= seq_num_expected_reg(23 downto 16);
+                            ctrl_next <= "0110";
                         end if;
                     when "0110" => -- seq_num 3
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= SEQ_NUM_EXPECTED_REG(15 downto 8);
-                            CTRL_NEXT <= "0111";
+                            w_master_data <= seq_num_expected_reg(15 downto 8);
+                            ctrl_next <= "0111";
                         end if;
                     when "0111" => -- seq_num 4
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= SEQ_NUM_EXPECTED_REG(07 downto 0);
+                            w_master_data <= seq_num_expected_reg(07 downto 0);
                         end if;
 
-                        if(FLAGS_REG(3) = '1') then -- destination address not found
-                            CTRL_NEXT <= "1000";
+                        if(flags_reg(3) = '1') then -- destination address not found
+                            ctrl_next <= "1000";
                         else
                             w_master_last <= '1';
                             if(slave_i_clk = '0') then
@@ -261,13 +255,13 @@ begin
 
                     when "1000" => -- dest_addr 1
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= DEST_ADDR_REG(15 downto 8);
-                            CTRL_NEXT <= "1001";
+                            w_master_data <= dest_addr_reg(15 downto 8);
+                            ctrl_next <= "1001";
                         end if;
                     when "1001" => -- dest_addr 2
                         w_master_last <= '1';
                         if(M_AXIS_TREADY = '1') then
-                            w_master_data <= DEST_ADDR_REG(07 downto 0);
+                            w_master_data <= dest_addr_reg(07 downto 0);
                         end if;
                         if(slave_i_clk = '0') then
                             w_master_valid <= '0';

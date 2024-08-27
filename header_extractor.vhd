@@ -22,9 +22,9 @@ entity header_extractor is
 end header_extractor;
 
 architecture behavioral of header_extractor is
-type state_type is (PACKET_LENGTH, CHECKSUM, SEQ_NUM, FLAG, PROTOCOL, DUMMY, SOURCE_ADDRESS, DESTINATION_ADDRESS, PAYLOAD, FINISHED); 
-signal state_reg                : state_type := PACKET_LENGTH; -- estado inicial setado como pl1
-signal state_next               : state_type;
+type t_state_type is (PACKET_LENGTH, CHECKSUM, SEQ_NUM, FLAG, PROTOCOL, DUMMY, SOURCE_ADDRESS, DESTINATION_ADDRESS, PAYLOAD, FINISHED); 
+signal state_reg                  : t_state_type := PACKET_LENGTH; -- estado inicial setado como pl1
+signal state_next                 : t_state_type;
         
 signal packet_length_reg          : std_logic_vector(15 downto 0) := (others => '0');
 signal packet_length_next         : std_logic_vector(15 downto 0) := (others => '0');
@@ -55,7 +55,7 @@ begin
     process(i_clk)
     begin
         if(rising_edge(i_clk)) then
-            state_reg               <= state_next;
+            state_reg                 <= state_next;
             packet_length_reg         <= packet_length_next;
             seq_num_reg               <= seq_num_next;
             src_addr_reg              <= src_addr_next;
@@ -190,7 +190,6 @@ begin
                     ctrl_next <= "00";
                 end if;
 
-
             when FLAG =>
                 port_controller_clock_next <= '1'; -- SEQ NUM CAPTURE
                 flag_next <= S_AXIS_T_DATA;
@@ -229,6 +228,7 @@ begin
 
             when PAYLOAD  =>
                 port_controller_clock_next <= '1';  -- DESTINATION ADDRESS CAPTURE
+
             when FINISHED =>
                 port_controller_clock_next <= '1';
                 packet_length_next <= packet_length_next(07 downto 0) & S_AXIS_T_DATA;
@@ -241,15 +241,14 @@ begin
 
             when others =>
         end case;
-
     end process;
 
     o_port_controller_clock <= port_controller_clock_reg;
-    o_seq_num <= seq_num_reg;
-    o_flag <= flag_reg;
-    o_src_addr <= src_addr_reg;
-    o_dest_addr <= dest_addr_reg;                        
-    o_packet_length <= packet_length_reg;
-    o_checksum <= checksum_reg;
+    o_seq_num               <= seq_num_reg;
+    o_flag                  <= flag_reg;
+    o_src_addr              <= src_addr_reg;
+    o_dest_addr             <= dest_addr_reg;                        
+    o_packet_length         <= packet_length_reg;
+    o_checksum              <= checksum_reg;
 
 end behavioral;
