@@ -52,13 +52,15 @@ architecture behavioral of top_module is
     component checksum
     port(
         -- input ports
-        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
-        S_AXIS_T_READY : in std_logic;
-        S_AXIS_T_DATA : in std_logic_vector(7 downto 0);
+        i_clk               : in std_logic;
+        S_AXIS_T_VALID      : in std_logic;
+        S_AXIS_T_LAST       : in std_logic;
+        S_AXIS_T_READY      : in std_logic;
+        S_AXIS_T_DATA       : in std_logic_vector(7 downto 0);
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
-        o_calc_checksum : out std_logic_vector(15 downto 0);        
-        o_checksum_error : out std_logic
+        o_calc_checksum     : out std_logic_vector(15 downto 0);        
+        o_checksum_error    : out std_logic
     );
     end component;
 

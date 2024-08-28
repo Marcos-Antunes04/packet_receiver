@@ -20,14 +20,14 @@ type t_state_type is (COUNTING, FINISHED);
 signal state_reg                : t_state_type := COUNTING; -- por padrão o estado começa como counting
 signal state_next               : t_state_type;
 
-signal COUNTER_REG              : std_logic_vector(15 downto 0) := (others => '0');
-signal COUNTER_NEXT             : std_logic_vector(15 downto 0) := (others => '0');
+signal counter_reg              : std_logic_vector(15 downto 0) := (others => '0');
+signal counter_next             : std_logic_vector(15 downto 0) := (others => '0');
 
-signal PACKET_LENGTH_ERROR_REG  : std_logic := '0';
-signal PACKET_LENGTH_ERROR_NEXT : std_logic := '0';
+signal packet_length_error_reg  : std_logic := '0';
+signal packet_length_error_next : std_logic := '0';
 
-signal CALC_packet_length_reg   : std_logic_vector(15 downto 0) := (others => '0'); 
-signal CALC_packet_length_next  : std_logic_vector(15 downto 0) := (others => '0'); 
+signal calc_packet_length_reg   : std_logic_vector(15 downto 0) := (others => '0'); 
+signal calc_packet_length_next  : std_logic_vector(15 downto 0) := (others => '0'); 
 
 begin
 
@@ -35,9 +35,9 @@ begin
     begin
         if(rising_edge(i_clk)) then
             state_reg               <= state_next;
-            PACKET_LENGTH_ERROR_REG <= PACKET_LENGTH_ERROR_NEXT;
-            COUNTER_REG             <= COUNTER_NEXT;
-            CALC_packet_length_reg  <= CALC_packet_length_next; 
+            packet_length_error_reg <= packet_length_error_next;
+            counter_reg             <= counter_next;
+            calc_packet_length_reg  <= calc_packet_length_next; 
         end if;
     end process;
     
@@ -57,34 +57,34 @@ begin
         end case;
     end process;
 
-    datapath: process(state_reg, COUNTER_REG, PACKET_LENGTH_ERROR_REG, CALC_packet_length_reg, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
+    datapath: process(state_reg, counter_reg, packet_length_error_reg, calc_packet_length_reg, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
     begin
         -- default values
-        PACKET_LENGTH_ERROR_NEXT <= PACKET_LENGTH_ERROR_REG;
-        COUNTER_NEXT             <= COUNTER_REG;
-        CALC_packet_length_next  <= CALC_packet_length_reg;
+        packet_length_error_next <= packet_length_error_reg;
+        counter_next             <= counter_reg;
+        calc_packet_length_next  <= calc_packet_length_reg;
 
         case state_reg is
             when COUNTING =>
-                PACKET_LENGTH_ERROR_NEXT <= '0';
+                packet_length_error_next <= '0';
                 if(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1' and S_AXIS_T_LAST = '0') then
-                    COUNTER_NEXT <= std_logic_vector(unsigned(COUNTER_REG) + 1);
+                    counter_next <= std_logic_vector(unsigned(counter_reg) + 1);
                 end if;
             when FINISHED =>
-                if (unsigned(COUNTER_REG) = unsigned(4 * unsigned(i_received_packet_length)) - 1) then
-                    PACKET_LENGTH_ERROR_NEXT <= '0';
-                    CALC_packet_length_next <= COUNTER_REG;
+                if (unsigned(counter_reg) = unsigned(4 * unsigned(i_received_packet_length)) - 1) then
+                    packet_length_error_next <= '0';
+                    calc_packet_length_next <= counter_reg;
                 else
-                    PACKET_LENGTH_ERROR_NEXT <= '1';
-                    CALC_packet_length_next <= COUNTER_REG;
+                    packet_length_error_next <= '1';
+                    calc_packet_length_next <= counter_reg;
                 end if;
 
-                COUNTER_NEXT <= X"0001";
+                counter_next <= X"0001";
             when others =>
         end case;
     end process;
 
-    o_packet_length_error <= PACKET_LENGTH_ERROR_NEXT;
-    o_calc_packet_length  <= CALC_packet_length_next;
+    o_packet_length_error <= packet_length_error_next;
+    o_calc_packet_length  <= calc_packet_length_next;
 
 end behavioral;

@@ -10,7 +10,9 @@ entity header_extractor is
         S_AXIS_T_LAST           : in std_logic;
         S_AXIS_T_READY          : in std_logic;
         S_AXIS_T_DATA           : in std_logic_vector(7 downto 0);
+        i_ready_checksum        : in std_logic;
         -- output ports 
+        o_valid_checksum        : out std_logic                     := '0';
         o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
         o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
         o_seq_num               : out std_logic_vector(31 downto 0) := (others => '0');
@@ -50,6 +52,8 @@ signal port_controller_clock_next : std_logic := '0';
 signal ctrl_reg                   : std_logic_vector(1 downto 0) := "00";
 signal ctrl_next                  : std_logic_vector(1 downto 0) := "00";
 
+signal w_checksum_valid           : std_logic := '0';
+
 begin
     -- atualização de estado
     process(i_clk)
@@ -73,74 +77,72 @@ begin
         --default value
         state_next <= state_reg;
 
-        if (S_AXIS_T_VALID = '1' and S_AXIS_T_READY = '1') then
-            case(state_reg) is
-                when PACKET_LENGTH =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "01") then
-                            state_next <= CHECKSUM;
-                        end if;
-
-                when CHECKSUM =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "01") then
-                            state_next <= SEQ_NUM;
-                        end if;
-
-                when SEQ_NUM =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "11") then
-                            state_next <= FLAG;
-                        end if;
-
-                when FLAG =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        else
-                            state_next <= PROTOCOL;
-                        end if;
-
-                when PROTOCOL =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        else
-                            state_next <= DUMMY;
-                        end if;
-
-                when DUMMY  =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "01") then
-                            state_next <= SOURCE_ADDRESS;
-                        end if;
-
-                when SOURCE_ADDRESS =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "01") then
-                            state_next <= DESTINATION_ADDRESS;
-                        end if;
-
-                when DESTINATION_ADDRESS     =>
-                        if (S_AXIS_T_LAST = '1') then 
-                            state_next <= FINISHED;
-                        elsif(ctrl_reg = "01") then
-                            state_next <= PAYLOAD;
-                        end if;
-
-                when PAYLOAD  =>
-                    if (S_AXIS_T_LAST = '1') then
+        case(state_reg) is
+            when PACKET_LENGTH =>
+                    if (S_AXIS_T_LAST = '1') then 
                         state_next <= FINISHED;
+                    elsif(ctrl_reg = "01" ) then
+                        state_next <= CHECKSUM;
                     end if;
-                when FINISHED =>
-                    if (S_AXIS_T_LAST = '0') then
-                        state_next <= PACKET_LENGTH;
+
+            when CHECKSUM =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    elsif(ctrl_reg = "01") then
+                        state_next <= SEQ_NUM;
                     end if;
-            end case;
-        end if;
+
+            when SEQ_NUM =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    elsif(ctrl_reg = "11") then
+                        state_next <= FLAG;
+                    end if;
+
+            when FLAG =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    else
+                        state_next <= PROTOCOL;
+                    end if;
+
+            when PROTOCOL =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    else
+                        state_next <= DUMMY;
+                    end if;
+
+            when DUMMY  =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    elsif(ctrl_reg = "01") then
+                        state_next <= SOURCE_ADDRESS;
+                    end if;
+
+            when SOURCE_ADDRESS =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    elsif(ctrl_reg = "01") then
+                        state_next <= DESTINATION_ADDRESS;
+                    end if;
+
+            when DESTINATION_ADDRESS     =>
+                    if (S_AXIS_T_LAST = '1') then 
+                        state_next <= FINISHED;
+                    elsif(ctrl_reg = "01") then
+                        state_next <= PAYLOAD;
+                    end if;
+
+            when PAYLOAD  =>
+                if (S_AXIS_T_LAST = '1') then
+                    state_next <= FINISHED;
+                end if;
+            when FINISHED =>
+                if (S_AXIS_T_LAST = '0') then
+                    state_next <= PACKET_LENGTH;
+                end if;
+        end case;
     end process;
 
     -- datapath
@@ -178,6 +180,7 @@ begin
                 end if;
 
             when SEQ_NUM =>
+                w_checksum_valid <= '1';
                 seq_num_next <= seq_num_next(23 downto 0) & S_AXIS_T_DATA;
 
                 if(ctrl_reg = "00") then
@@ -230,14 +233,15 @@ begin
                 port_controller_clock_next <= '1';  -- DESTINATION ADDRESS CAPTURE
 
             when FINISHED =>
+                w_checksum_valid           <= '0';
                 port_controller_clock_next <= '1';
-                packet_length_next <= packet_length_next(07 downto 0) & S_AXIS_T_DATA;
-                ctrl_next                       <= "01";
-                seq_num_next                    <= (others => '0');
-                src_addr_next                   <= (others => '0');
-                dest_addr_next                  <= (others => '0');
-                checksum_next                   <= (others => '0');
-                flag_next                       <= (others => '0');
+                packet_length_next         <= packet_length_next(07 downto 0) & S_AXIS_T_DATA;
+                ctrl_next                  <= "01";
+                seq_num_next               <= (others => '0');
+                src_addr_next              <= (others => '0');
+                dest_addr_next             <= (others => '0');
+                checksum_next              <= (others => '0');
+                flag_next                  <= (others => '0');
 
             when others =>
         end case;
@@ -250,5 +254,6 @@ begin
     o_dest_addr             <= dest_addr_reg;                        
     o_packet_length         <= packet_length_reg;
     o_checksum              <= checksum_reg;
+    o_valid_checksum        <= w_checksum_valid;
 
 end behavioral;

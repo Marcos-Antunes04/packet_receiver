@@ -55,15 +55,15 @@ signal flag_reg               : std_logic_vector(7 downto 0)   := (others => '0'
 signal flag_next              : std_logic_vector(7 downto 0)   := (others => '0');
 
 -- registradores de memória
-signal r_seq_num_reg,  r_seq_num_next : std_logic_vector(159 downto 0) := (others => '0');
+signal r_seq_num_reg,  r_seq_num_next  : std_logic_vector(159 downto 0) := (others => '0');
 signal r_src_addr_reg, r_src_addr_next : std_logic_vector(79 downto 0) := (others => '0');
 
 -- registradores de sinal de erro
-signal seq_num_error_reg, seq_num_error_next : std_logic := '0';
+signal seq_num_error_reg, seq_num_error_next       : std_logic := '0';
 signal sync_close_error_reg, sync_close_error_next : std_logic := '0';
-signal sync_error_reg, sync_error_next : std_logic := '0';
-signal close_error_reg, close_error_next : std_logic := '0';
-signal dest_addr_error_reg, dest_addr_error_next : std_logic := '0';
+signal sync_error_reg, sync_error_next             : std_logic := '0';
+signal close_error_reg, close_error_next           : std_logic := '0';
+signal dest_addr_error_reg, dest_addr_error_next   : std_logic := '0';
 begin
 
     -- processo de atualização de estados
@@ -290,19 +290,19 @@ begin
         end case;
     end process;
 
-    o_close_error <= close_error_next;
+    o_close_error      <= close_error_next;
 
     o_sync_close_error <= sync_close_error_next;
     
-    o_seq_num_error <= seq_num_error_next;
+    o_seq_num_error    <= seq_num_error_next;
 
-    o_dest_addr <= dest_addr_next;
+    o_dest_addr        <= dest_addr_next;
 
-    o_dest_port <= dest_port_next;
+    o_dest_port        <= dest_port_next;
 
-    o_sync_error <= sync_error_next;
+    o_sync_error       <= sync_error_next;
 
-    o_dest_addr_error <= dest_addr_error_next;
+    o_dest_addr_error  <= dest_addr_error_next;
 
     o_expected_seq_num <= expected_seq_num_next;
 end behavioral;

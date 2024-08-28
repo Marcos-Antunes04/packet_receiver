@@ -18,8 +18,8 @@ end checksum;
 
 architecture behavioral of checksum is
 type t_state_type is (EXEC, FINISHED);
-signal state_reg         : t_state_type := EXEC; -- por padrão o estado começa como most significant
-signal state_next        : t_state_type;
+signal state_reg           : t_state_type := EXEC; -- por padrão o estado começa como most significant
+signal state_next          : t_state_type;
 
 signal check_value_reg     : std_logic_vector(31 downto 0) := (others => '0');
 signal check_value_next    : std_logic_vector(31 downto 0) := (others => '0');
@@ -41,7 +41,7 @@ begin
     clk_process: process(i_clk)
     begin
         if(rising_edge(i_clk)) then
-            state_reg        <= state_next       ;
+            state_reg          <= state_next         ;
             check_value_reg    <= check_value_next   ;
             check_error_reg    <= check_error_next   ;
             check_intermed_reg <= check_intermed_next;
