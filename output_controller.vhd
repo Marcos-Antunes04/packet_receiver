@@ -6,7 +6,7 @@ entity output_controller is
     port(
         -- master interface input ports ports
         slave_i_clk               : in  std_logic;
-        S_AXIS_T_LAST             : in  std_logic;
+        i_last             : in  std_logic;
         i_flag                    : in  std_logic_vector(06 downto 0);
         i_calc_checksum           : in  std_logic_vector(15 downto 0); -- 2 clock cycles
         i_dest_addr               : in  std_logic_vector(15 downto 0); -- 2 clock cycles
@@ -67,13 +67,13 @@ begin
         end if;
     end process;
 
-    process(state_reg, ctrl_reg, flags_reg, S_AXIS_T_LAST, M_AXIS_TREADY)
+    process(state_reg, ctrl_reg, flags_reg, i_last, M_AXIS_TREADY)
     begin
         -- default value
         state_next <= state_reg;
         case state_reg is
             when IDLE =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= START;
                 elsif(M_AXIS_TREADY = '1') then
                     state_next <= EXEC;
@@ -85,7 +85,7 @@ begin
                     state_next <= IDLE;
                 end if;
             when EXEC =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= START;
                 end if;
 
@@ -120,7 +120,7 @@ begin
         end case;
     end process;
 
-    process(state_reg,ctrl_reg, flags_reg, calc_checksum_reg, dest_addr_reg, seq_num_expected_reg, packet_length_reg, S_AXIS_T_LAST, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected, M_AXIS_TREADY, slave_i_clk)
+    process(state_reg,ctrl_reg, flags_reg, calc_checksum_reg, dest_addr_reg, seq_num_expected_reg, packet_length_reg, i_last, i_flag, i_calc_checksum, i_dest_addr, i_seq_num_expected, i_packet_length_expected, M_AXIS_TREADY, slave_i_clk)
     begin
         -- Default values
         ctrl_next             <= ctrl_reg;
@@ -155,7 +155,7 @@ begin
                     ctrl_next <= "1000";
                 end if; 
 
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     -- Esses sinais não podem receber atribuião padrão no início do process
                     flags_next            <= i_flag;
                     calc_checksum_next    <= i_calc_checksum;

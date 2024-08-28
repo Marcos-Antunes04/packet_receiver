@@ -19,9 +19,9 @@
 @28
 tb_top_module.master_module.slave_i_clk
 @22
-tb_top_module.master_module.s_axis_t_data[7:0]
+tb_top_module.master_module.i_data[7:0]
 @28
-tb_top_module.master_module.s_axis_t_last
+tb_top_module.master_module.i_last
 @22
 tb_top_module.master_module.module_port_controller.seq_num_next[31:0]
 @28

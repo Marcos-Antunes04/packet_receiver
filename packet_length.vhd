@@ -6,7 +6,7 @@ entity packet_length is
         -- input ports
         i_clk                    : in std_logic;
         S_AXIS_T_VALID           : in std_logic;
-        S_AXIS_T_LAST            : in std_logic;
+        i_last            : in std_logic;
         S_AXIS_T_READY           : in std_logic;
         i_received_packet_length : in std_logic_vector(15 downto 0);
         -- output ports
@@ -41,14 +41,14 @@ begin
         end if;
     end process;
     
-    next_state: process(state_reg, S_AXIS_T_LAST)
+    next_state: process(state_reg, i_last)
     begin
         -- default value
         state_next <= state_reg;
 
         case state_reg is
             when COUNTING =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= FINISHED;
                 end if;
             when FINISHED =>
@@ -57,7 +57,7 @@ begin
         end case;
     end process;
 
-    datapath: process(state_reg, counter_reg, packet_length_error_reg, calc_packet_length_reg, S_AXIS_T_READY, S_AXIS_T_VALID, S_AXIS_T_LAST)
+    datapath: process(state_reg, counter_reg, packet_length_error_reg, calc_packet_length_reg, S_AXIS_T_READY, S_AXIS_T_VALID, i_last)
     begin
         -- default values
         packet_length_error_next <= packet_length_error_reg;
@@ -67,7 +67,7 @@ begin
         case state_reg is
             when COUNTING =>
                 packet_length_error_next <= '0';
-                if(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1' and S_AXIS_T_LAST = '0') then
+                if(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1' and i_last = '0') then
                     counter_next <= std_logic_vector(unsigned(counter_reg) + 1);
                 end if;
             when FINISHED =>

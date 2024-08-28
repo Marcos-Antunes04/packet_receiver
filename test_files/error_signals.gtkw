@@ -19,9 +19,9 @@
 @28
 tb_top_module.master_module.module_header_extractor.i_clk
 @22
-tb_top_module.master_module.module_header_extractor.S_AXIS_T_DATA[7:0]
+tb_top_module.master_module.module_header_extractor.i_data[7:0]
 @28
-tb_top_module.master_module.module_header_extractor.S_AXIS_T_LAST
+tb_top_module.master_module.module_header_extractor.i_last
 @22
 tb_top_module.master_module.module_checksum.i_received_checksum[15:0]
 tb_top_module.master_module.module_checksum.o_calc_checksum[15:0]

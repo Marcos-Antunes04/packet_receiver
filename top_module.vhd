@@ -7,9 +7,9 @@ entity top_module is
         -- slave interface ports
         slave_i_clk        : in std_logic;
         S_AXIS_T_VALID     : in std_logic;
-        S_AXIS_T_LAST      : in std_logic;
+        i_last      : in std_logic;
         S_AXIS_T_READY     : out std_logic;
-        S_AXIS_T_DATA      : in std_logic_vector(7 downto 0);
+        i_data      : in std_logic_vector(7 downto 0);
         i_src_port         : in std_logic_vector(4 downto 0);
 
         -- master interface ports
@@ -54,9 +54,9 @@ architecture behavioral of top_module is
         -- input ports
         i_clk               : in std_logic;
         S_AXIS_T_VALID      : in std_logic;
-        S_AXIS_T_LAST       : in std_logic;
+        i_last       : in std_logic;
         S_AXIS_T_READY      : in std_logic;
-        S_AXIS_T_DATA       : in std_logic_vector(7 downto 0);
+        i_data       : in std_logic_vector(7 downto 0);
         i_received_checksum : in std_logic_vector(15 downto 0);
         -- output ports
         o_calc_checksum     : out std_logic_vector(15 downto 0);        
@@ -67,7 +67,7 @@ architecture behavioral of top_module is
     component packet_length
     port(
         -- input ports
-        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        i_clk, S_AXIS_T_VALID, i_last : in std_logic;
         S_AXIS_T_READY                       : in std_logic;
         i_received_packet_length             : in std_logic_vector(15 downto 0);
         -- output ports            
@@ -79,9 +79,9 @@ architecture behavioral of top_module is
     component header_extractor
     port(
         -- input ports
-        i_clk, S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        i_clk, S_AXIS_T_VALID, i_last : in std_logic;
         S_AXIS_T_READY          : in std_logic;
-        S_AXIS_T_DATA           : in std_logic_vector(7 downto 0);
+        i_data           : in std_logic_vector(7 downto 0);
         -- output ports                
         o_packet_length         : out std_logic_vector(15 downto 0) := (others => '0');
         o_flag                  : out std_logic_vector(07 downto 0) := (others => '0');
@@ -96,7 +96,7 @@ architecture behavioral of top_module is
     component port_controller
     port(
         -- input ports
-        S_AXIS_T_VALID, S_AXIS_T_LAST : in std_logic;
+        S_AXIS_T_VALID, i_last : in std_logic;
         S_AXIS_T_READY                : in std_logic;
         i_src_port                    : in std_logic_vector(4 downto 0);
         i_port_clock_controller       : in std_logic;
@@ -120,7 +120,7 @@ architecture behavioral of top_module is
     component output_controller
     port(
         slave_i_clk                : in  std_logic;
-        S_AXIS_T_LAST              : in  std_logic;
+        i_last              : in  std_logic;
         i_flag                     : in  std_logic_vector(06 downto 0);
         i_calc_checksum            : in  std_logic_vector(15 downto 0); -- 2 clock cycles
         i_dest_addr                : in  std_logic_vector(15 downto 0); -- 2 clock cycles
@@ -144,9 +144,9 @@ begin
         i_clk               => slave_i_clk,
         S_AXIS_T_READY      => w_ready,
         S_AXIS_T_VALID      => S_AXIS_T_VALID,
-        S_AXIS_T_LAST       => S_AXIS_T_LAST,
+        i_last       => i_last,
         i_received_checksum => w_checksum,
-        S_AXIS_T_DATA       => S_AXIS_T_DATA,
+        i_data       => i_data,
         o_calc_checksum     => o_calc_checksum,
         o_checksum_error    => checksum_error 
     );
@@ -156,7 +156,7 @@ begin
         i_clk                    => slave_i_clk,
         S_AXIS_T_READY           => w_ready,
         S_AXIS_T_VALID           => S_AXIS_T_VALID,
-        S_AXIS_T_LAST            => S_AXIS_T_LAST,
+        i_last            => i_last,
         i_received_packet_length => w_packet_length,
         o_packet_length_error    => packet_length_error,
         o_calc_packet_length     => w_calc_packet_lenght
@@ -167,8 +167,8 @@ begin
         i_clk                   => slave_i_clk,
         S_AXIS_T_READY          => w_ready,
         S_AXIS_T_VALID          => S_AXIS_T_VALID,
-        S_AXIS_T_LAST           => S_AXIS_T_LAST,
-        S_AXIS_T_DATA           => S_AXIS_T_DATA,
+        i_last           => i_last,
+        i_data           => i_data,
         o_flag                  => w_flag, 
         o_packet_length         => w_packet_length,
         o_seq_num               => w_seq_num, 
@@ -183,7 +183,7 @@ begin
         i_port_clock_controller  => w_port_controller_clock,
         S_AXIS_T_READY           => w_ready,
         S_AXIS_T_VALID           => S_AXIS_T_VALID,
-        S_AXIS_T_LAST            => S_AXIS_T_LAST,
+        i_last            => i_last,
         i_flag                   => w_flag, 
         i_seq_num                => w_seq_num, 
         i_src_addr               => w_src_addr, 
@@ -202,7 +202,7 @@ begin
     module_output_controller: output_controller
     port map (        
             slave_i_clk              => slave_i_clk,
-            S_AXIS_T_LAST            => S_AXIS_T_LAST,
+            i_last            => i_last,
             i_flag                   => flags,
             i_calc_checksum          => o_calc_checksum,
             i_dest_addr              => o_dest_addr,

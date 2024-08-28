@@ -21,13 +21,13 @@
 tb_top_module.master_module.module_output_controller.m_axis_tready
 @22
 [color] 5
-tb_top_module.master_module.s_axis_t_data[7:0]
+tb_top_module.master_module.i_data[7:0]
 @28
 [color] 5
 tb_top_module.master_module.module_output_controller.slave_i_clk
 @29
 [color] 5
-tb_top_module.master_module.s_axis_t_last
+tb_top_module.master_module.i_last
 @28
 tb_top_module.master_module.m_axis_tlast
 @22

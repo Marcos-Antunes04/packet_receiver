@@ -5,7 +5,7 @@ entity port_controller is
     port(
         -- input ports
         S_AXIS_T_VALID          : in std_logic;
-        S_AXIS_T_LAST           : in std_logic;
+        i_last           : in std_logic;
         S_AXIS_T_READY          : in std_logic;
         i_src_port              : in std_logic_vector(4 downto 0);
         i_port_clock_controller : in std_logic;
@@ -66,8 +66,7 @@ signal close_error_reg, close_error_next           : std_logic := '0';
 signal dest_addr_error_reg, dest_addr_error_next   : std_logic := '0';
 begin
 
-    -- processo de atualização de estados
-    process(i_port_clock_controller)
+    state_machine: process(i_port_clock_controller)
     begin
         if(rising_edge(i_port_clock_controller)) then
             state_reg             <= state_next;
@@ -89,37 +88,37 @@ begin
         end if;
     end process;
 
-    process(state_reg, S_AXIS_T_LAST, S_AXIS_T_READY, S_AXIS_T_VALID)
+    next_state: process(state_reg, i_last, S_AXIS_T_READY, S_AXIS_T_VALID)
     begin
         -- default value
         state_next <= state_reg;
         case state_reg is
             when START =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= DEST_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     state_next <= SEQ_NUM_CAPTURE;
                 end if;
             when SEQ_NUM_CAPTURE   =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= FLAG_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     state_next <= FLAG_CAPTURE;
                 end if;
             when FLAG_CAPTURE =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= SRC_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     state_next <= SRC_ADDR_CAPTURE;
                 end if;
             when SRC_ADDR_CAPTURE  =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= DEST_ADDR_CAPTURE;
                 elsif(S_AXIS_T_READY = '1' and S_AXIS_T_VALID = '1') then
                     state_next <= DEST_ADDR_CAPTURE;
                 end if;
             when DEST_ADDR_CAPTURE =>
-                if(S_AXIS_T_LAST = '1') then
+                if(i_last = '1') then
                     state_next <= state_reg;
                 else
                     state_next <= SEQ_NUM_CAPTURE;
@@ -128,8 +127,7 @@ begin
         end case;
     end process;
                   
-    -- operações de estado
-    process(state_reg, open_ports_reg, src_addr_reg, dest_addr_reg, SEQ_NUM_REG, flag_reg, r_seq_num_reg, r_src_addr_reg, seq_num_error_reg, sync_close_error_reg, sync_error_reg, close_error_reg, expected_seq_num_reg, SRC_PORT_REG)
+    datapath: process(state_reg, open_ports_reg, src_addr_reg, dest_addr_reg, SEQ_NUM_REG, flag_reg, r_seq_num_reg, r_src_addr_reg, seq_num_error_reg, sync_close_error_reg, sync_error_reg, close_error_reg, expected_seq_num_reg, SRC_PORT_REG)
     begin
         OPEN_PORTS_NEXT       <= open_ports_reg;
         flag_next             <= flag_reg;

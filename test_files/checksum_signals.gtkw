@@ -19,9 +19,9 @@
 @28
 tb_top_module.master_module.module_checksum.i_clk
 @22
-tb_top_module.master_module.module_checksum.S_AXIS_T_DATA[7:0]
+tb_top_module.master_module.module_checksum.i_data[7:0]
 @28
-tb_top_module.master_module.module_checksum.S_AXIS_T_LAST
+tb_top_module.master_module.module_checksum.i_last
 @22
 tb_top_module.master_module.module_checksum.check_calc_next[31:0]
 tb_top_module.master_module.module_checksum.check_value_next[31:0]

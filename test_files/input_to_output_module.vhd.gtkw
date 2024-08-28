@@ -18,7 +18,7 @@
 [sst_vpaned_height] 288
 @28
 tb_top_module.master_module.module_checksum.i_clk
-tb_top_module.master_module.module_checksum.s_axis_t_last
+tb_top_module.master_module.module_checksum.i_last
 @22
 tb_top_module.master_module.flags[6:0]
 tb_top_module.master_module.module_port_controller.o_expected_seq_num[31:0]

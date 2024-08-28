@@ -18,7 +18,7 @@
 [sst_vpaned_height] 275
 @28
 tb_top_module.master_module.module_header_extractor.i_clk
-tb_top_module.master_module.module_port_controller.s_axis_t_last
+tb_top_module.master_module.module_port_controller.i_last
 @22
 tb_top_module.master_module.module_output_controller.flags_next[6:0]
 tb_top_module.master_module.module_output_controller.calc_checksum_next[15:0]
